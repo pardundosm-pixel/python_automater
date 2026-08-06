@@ -37,7 +37,7 @@ from sheets.parlimen_dun._13_2 import populate_jadual_13_2 as jadual_13_2
 # --- NEW: IMPORT MALAYSIA MAPPERS ---
 # (Adjust the folder name 'sheets.malaysia' if you named the folder differently!)
 from sheets.malaysia._14_0 import populate_jadual_14 as jadual_14
-
+from sheets.malaysia._31_0 import populate_jadual_31 as jadual_31
 
 # ==========================================
 # 2. BUILD THE NESTED ROUTING REGISTRY
@@ -73,9 +73,10 @@ MASTER_REGISTRY = {
         "13.2_Koperasi": jadual_13_2
     },
     
-    # --- NEW: Profile 2 (Malaysia) ---
+    # --- Profile 2 (Malaysia) ---
     "malaysia": {
         "14.0_KDNK": jadual_14,
+        "31.0_Jenayah_violent": jadual_31,
         # Add future Malaysia sheets here
     }
 }
