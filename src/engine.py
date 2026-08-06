@@ -34,10 +34,12 @@ from sheets.parlimen_dun._13_0_1 import populate_jadual_13_0_1 as jadual_13_0_1
 from sheets.parlimen_dun._13_1 import populate_jadual_13_1 as jadual_13_1
 from sheets.parlimen_dun._13_2 import populate_jadual_13_2 as jadual_13_2
 
-# --- NEW: IMPORT MALAYSIA MAPPERS ---
-# (Adjust the folder name 'sheets.malaysia' if you named the folder differently!)
-from sheets.malaysia._14_0 import populate_jadual_14 as jadual_14
-from sheets.malaysia._31_0 import populate_jadual_31 as jadual_31
+# (Malaysia Template Mappers)
+from sheets.malaysia._14_0 import populate_jadual_14 as jadual_14_malaysia
+from sheets.malaysia._14_1 import populate_jadual_14_1 as jadual_14_1_malaysia
+from sheets.malaysia._20_0 import populate_jadual_20 as jadual_20_malaysia
+from sheets.malaysia._31_0 import populate_jadual_31 as jadual_31_malaysia
+
 
 # ==========================================
 # 2. BUILD THE NESTED ROUTING REGISTRY
@@ -73,13 +75,20 @@ MASTER_REGISTRY = {
         "13.2_Koperasi": jadual_13_2
     },
     
-    # --- Profile 2 (Malaysia) ---
+    # Profile 2: Malaysia
     "malaysia": {
-        "14.0_KDNK": jadual_14,
-        #"31.0_Jenayah_violent": jadual_31,
-        # Add future Malaysia sheets here
+        "14.0": jadual_14_malaysia, 
+        "14.1": jadual_14_1_malaysia,
+        "20.0": jadual_20_malaysia,
+        "31.0": jadual_31_malaysia
+    },
+    
+    # Profile 3: Negeri
+    "negeri": {
+        # Future Negeri Mappers will go here
     }
 }
+
 
 # ==========================================
 # 3. REPORT ORCHESTRATOR
@@ -88,16 +97,17 @@ def generate_report(location_code: str, report_type: str, excel_app: xw.App, par
     print(f"\n=============================================")
     print(f"Generating {report_type.upper()} Report [{template_key}] for: {location_code}")
     
-    # --- A. NEW HIERARCHY FETCHING ---
+    # --- A. HIERARCHY FETCHING ---
     if report_type == 'parlimen':
         hierarchy = get_location_hierarchy(location_code)
     elif report_type == 'dun':
         hierarchy = get_dun_hierarchy(location_code, parent_code)
+    elif report_type == 'negeri':
+        hierarchy = {'state_code': location_code, 'state_name': 'Unknown_State'}
     elif report_type == 'malaysia':
-        # Malaysia doesn't need to query the dim_geo table, we just build a dummy dictionary
         hierarchy = {'state_name': 'Malaysia', 'location_name': 'Malaysia', 'state_code': '00'}
     else:
-        print(f"  -> [Error] Invalid report_type '{report_type}'. Must be 'parlimen', 'dun', or 'malaysia'.")
+        print(f"  -> [Error] Invalid report_type '{report_type}'. Must be 'parlimen', 'dun', 'negeri', or 'malaysia'.")
         return
         
     if not hierarchy:
@@ -123,7 +133,6 @@ def generate_report(location_code: str, report_type: str, excel_app: xw.App, par
         # --- D. DYNAMIC ROUTING ---
         for sheet in wb.sheets:
             sheet_name_clean = str(sheet.name).strip()
-            
             for prefix in sorted_prefixes:
                 if sheet_name_clean.startswith(prefix):
                     mapper_function = active_mappers[prefix]
@@ -133,29 +142,52 @@ def generate_report(location_code: str, report_type: str, excel_app: xw.App, par
         # --- E. CONSTRUCT OUTPUT DIRECTORY & SAVE LOGIC ---
         state_name = str(hierarchy.get('state_name', 'Unknown_State')).strip()
         safe_state_name = state_name.replace('/', '_').replace('\\', '_')
+        state_code = str(hierarchy.get('state_code', '00')).strip().zfill(2)
         
+        base_output_dir = os.path.abspath(OUTPUT_DIR)
+        
+        # 1. Determine Root Category Folder based on template profile
+        if template_key == "parlimen_dun":
+            category_folder = os.path.join(base_output_dir, "Jadual 1 - 13 (Parlimen & DUN)")
+        elif template_key == "malaysia":
+            category_folder = os.path.join(base_output_dir, "Jadual Malaysia")
+        elif template_key == "negeri":
+            category_folder = os.path.join(base_output_dir, "Jadual Negeri")
+        else:
+            category_folder = os.path.join(base_output_dir, f"Lain-lain ({template_key})")
+
+        # 2. Determine Subfolders and Naming
         if report_type == 'parlimen':
             parl_code = str(hierarchy.get('parl_code', '')).strip()
             parl_name = str(hierarchy.get('parl_name', '')).strip()
-            target_dir = os.path.join(os.path.abspath(OUTPUT_DIR), safe_state_name, "Parlimen")
-            file_name = f"{parl_code} {parl_name} - {template_key}.xlsx"
+            
+            # e.g., output/Jadual 1 - 13 (Parlimen & DUN)/Johor/Parlimen/P.143 Pagoh.xlsx
+            target_dir = os.path.join(category_folder, safe_state_name, "Parlimen")
+            file_name = f"{parl_code} {parl_name}.xlsx"
             
         elif report_type == 'dun':
             dun_code = str(hierarchy.get('dun_code', '')).strip()
             dun_name = str(hierarchy.get('dun_name', '')).strip()
-            parent_code_hierarchy = str(hierarchy.get('parent_parl_code', '')).strip()
-            parent_name = str(hierarchy.get('parent_parl_name', '')).strip()
-            safe_parent_folder = f"{parent_code_hierarchy}_{parent_name}".replace('/', '_').replace('\\', '_')
-            target_dir = os.path.join(os.path.abspath(OUTPUT_DIR), safe_state_name, "DUN", safe_parent_folder)
-            file_name = f"{dun_code} {dun_name} - {template_key}.xlsx"
+            
+            # e.g., output/Jadual 1 - 13 (Parlimen & DUN)/Johor/DUN/01_N.07 Bukit Kepong.xlsx
+            target_dir = os.path.join(category_folder, safe_state_name, "DUN")
+            file_name = f"{state_code}_{dun_code} {dun_name}.xlsx"
+            
+        elif report_type == 'negeri':
+            # e.g., output/Jadual Negeri/Jadual_42_56_Johor.xlsx
+            target_dir = category_folder
+            file_name = f"Jadual_42_56_{safe_state_name}.xlsx"
             
         elif report_type == 'malaysia':
-            # NEW: Save Malaysia reports directly into the root Output folder
-            target_dir = os.path.abspath(OUTPUT_DIR)
-            file_name = f"MALAYSIA Profile - {template_key}.xlsx"
+            # e.g., output/Jadual Malaysia/Jadual_14_41_Malaysia.xlsx
+            target_dir = category_folder
+            file_name = "Jadual_14_41_Malaysia.xlsx"
         
+        # 3. Create the directory safely
         os.makedirs(target_dir, exist_ok=True)
-        save_path = os.path.join(target_dir, file_name)
+        
+        # Use realpath to resolve any Mac iCloud symlinks before giving it to AppleScript!
+        save_path = os.path.realpath(os.path.join(target_dir, file_name))
         
         # --- Save Report and Close Workbook ---
         wb.save(save_path)
