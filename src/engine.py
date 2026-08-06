@@ -76,7 +76,7 @@ MASTER_REGISTRY = {
     # --- Profile 2 (Malaysia) ---
     "malaysia": {
         "14.0_KDNK": jadual_14,
-        "31.0_Jenayah_violent": jadual_31,
+        #"31.0_Jenayah_violent": jadual_31,
         # Add future Malaysia sheets here
     }
 }
