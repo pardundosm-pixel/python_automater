@@ -11,7 +11,7 @@ HEADER_ANCHOR = "INTERNET DAN MEDIA SOSIAL" # e.g., "MAKLUMAT ASAS" or "KEMISKIN
 # TODO: Map the EXCEL ROW NUMBER to a TUPLE of ("METRIC_NAME", "YEAR")
 # Format: { Excel_Row: ("metric_name_in_database", "Year") }
 ROW_MAP = {
-    8: ("bil_nadi", "2025"),
+    8: ("bilangan_nadi", "2025"),
 }
 
 # TODO: Set the furthest row down that contains dummy template data for cleanup

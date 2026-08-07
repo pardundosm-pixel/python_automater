@@ -16,7 +16,7 @@ ROW_MAP = {
     14: ("kedai_dobi", "2025"),
     17: ("kedai_runcit", "2025"),
     20: ("bengkel_kereta", "2025"),
-    23: ("klinik_gigi", "2025"),
+    23: ("klinik_gigi_swasta", "2025"),
     26: ("klinik_swasta", "2025"),
     29: ("pusat_komuniti_desa", "2025"),
     32: ("farmasi", "2025"),

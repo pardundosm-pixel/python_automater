@@ -13,8 +13,8 @@ HEADER_ANCHOR = "KEMISKINAN" # e.g., "MAKLUMAT ASAS" or "KEMISKINAN"
 ROW_MAP = {
     10: ("jumlah_keseluruhan_umur", "2023"),
     11: ("jumlah_keseluruhan_umur", "2024"),
-    13: ("jumlah_miskin_tegar", "2023"),
-    14: ("jumlah_miskin_tegar", "2024"),
+    13: ("jumlah_keseluruhan_miskin_tegar", "2023"),
+    14: ("jumlah_keseluruhan_miskin_tegar", "2024"),
     16: ("jumlah_miskin_tegar_0_14", "2023"),
     17: ("jumlah_miskin_tegar_0_14", "2024"),
     19: ("jumlah_miskin_tegar_15_30", "2023"),
