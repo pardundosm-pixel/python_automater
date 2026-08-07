@@ -11,11 +11,11 @@ HEADER_ANCHOR = "PERTUBUHAN/ SYARIKAT PERNIAGAAN" # e.g., "MAKLUMAT ASAS" or "KE
 # TODO: Map the EXCEL ROW NUMBER to a TUPLE of ("METRIC_NAME", "YEAR")
 # Format: { Excel_Row: ("metric_name_in_database", "Year") }
 ROW_MAP = {
-    10: ("aktiviti_kewangan_hartanah_profesional_pentadbiran_kesenian", "2025"),
-    15: ("pendidikan_kesihatann", "2025"),
-    19: ("lain_perkhidmatan", "2025"),
-    22: ("rambut_penjagaan_kecantikan_lain", "2025"),
-    25: ("lain_aktiviti", "2025"),
+    10: ("aktiviti_kewangan_insurans_takaful_aktiviti_hartanah_aktiviti_profesional_aktiviti_pentadbiran_dan_kesenian", "2025"),
+    15: ("pendidikan_dan_aktiviti_kesihatan_kemanusiaan_kerja_sosial", "2025"),
+    19: ("aktiviti_perkhidmatan_lain", "2025"),
+    22: ("dandanan_rambut_dan_penjagaan_kecantikan_lain", "2025"),
+    25: ("lain_lain_aktiviti_di_bawah_aktiviti_perkhidmatan_lain", "2025"),
 }
 
 # TODO: Set the furthest row down that contains dummy template data for cleanup

@@ -11,12 +11,12 @@ HEADER_ANCHOR = "PERTUBUHAN/ SYARIKAT PERNIAGAAN" # e.g., "MAKLUMAT ASAS" or "KE
 # TODO: Map the EXCEL ROW NUMBER to a TUPLE of ("METRIC_NAME", "YEAR")
 # Format: { Excel_Row: ("metric_name_in_database", "Year") }
 ROW_MAP = {
-    11: ("pertanian_perhutanan_perikanan", "2025"),
+    11: ("pertanian", "2025"),
     14: ("tanaman", "2025"),
     17: ("ternakan", "2025"),
     20: ("perikanan", "2025"),
-    23: ("perhutanan_pembalakan", "2025"),
-    26: ("perlombongan_pengkuarian", "2025"),
+    23: ("perhutanan_dan_pembalakan", "2025"),
+    26: ("perlombongan_dan_pengkuarian", "2025"),
     29: ("pembuatan", "2025"),
     32: ("pembinaan", "2025"),
     35: ("perkhidmatan", "2025"),

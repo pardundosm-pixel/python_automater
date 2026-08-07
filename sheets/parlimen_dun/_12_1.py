@@ -12,22 +12,22 @@ HEADER_ANCHOR = "PERTUBUHAN/ SYARIKAT PERNIAGAAN" # e.g., "MAKLUMAT ASAS" or "KE
 # Format: { Excel_Row: ("metric_name_in_database", "Year") }
 ROW_MAP = {
     13: ("perkhidmatan", "2025"),
-    16: ("elektrik_gas_wap_pendingin_udara", "2025"),
-    19: ("air_pembentungan_pengurusan_sisa_pemulihan", "2025"),
-    24: ("perdagangan_motor", "2025"),
-    29: ("pembaikan_motor", "2025"),
-    34: ("lain_motor", "2025"),
-    37: ("pengangkutan_penyimpanan", "2025"),
-    40: ("penginapan_makanan_minuman", "2025"),
-    44: ("hotel_resort", "2025"),
+    16: ("bekalan_elektrik_gas_wap_dan_pendinginan_udara", "2025"),
+    19: ("bekalan_air_pembentungan_pengurusan_sisa_dan_aktiviti_pemulihan", "2025"),
+    24: ("perdagangan_borong_dan_runcit_pembaikan_kenderaan_bermotor", "2025"),
+    29: ("pembaikan_dan_penyelenggaraan_motosikal_bengkel_motorsikal", "2025"),
+    34: ("lain_lain_aktiviti_di_bawah_perdagangan_borong_dan_runcit_pembaikan_kenderaan_bermotor", "2025"),
+    37: ("pengangkutan_dan_penyimpanan", "2025"),
+    40: ("penginapan_dan_aktiviti_perkhidmatan_makanan_dan_minuman", "2025"),
+    44: ("hotel_dan_hotel_resort", "2025"),
     47: ("motel", "2025"),
     50: ("homestay", "2025"),
     53: ("gerai_penjaja_makanan", "2025"),
-    56: ("gerai_makanan_minuman", "2025"),
+    56: ("makanan_dan_minuman_penyediaan_makanan_dan_minuman_di_dalam_gerai_penjaja", "2025"),
     61: ("gerai_penjaja_minuman", "2025"),
-    64: ("restoran_kelab_malam", "2025"),
+    64: ("restoran_dan_restoran_yang_juga_kelab_malam", "2025"),
     67: ("restoran_makanan_segera", "2025"),
-    70: ("lain_aktiviti", "2025"),
+    70: ("lain_lain_aktiviti_di_bawah_penginapan_dan_aktiviti_perkhidmatan_makanan_dan_minuman", "2025"),
 }
 
 # TODO: Set the furthest row down that contains dummy template data for cleanup

@@ -11,9 +11,9 @@ HEADER_ANCHOR = "STATISTIK KOPERASI" # e.g., "MAKLUMAT ASAS" or "KEMISKINAN"
 # TODO: Map the EXCEL ROW NUMBER to a TUPLE of ("METRIC_NAME", "YEAR")
 # Format: { Excel_Row: ("metric_name_in_database", "Year") }
 ROW_MAP = {
-    8:  ("bil_koperasi", "2021"),
-    9:  ("bil_koperasi", "2022"),
-    10:  ("bil_koperasi", "2023"),
+    8:  ("koperasi", "2021"),
+    9:  ("koperasi", "2022"),
+    10:  ("koperasi", "2023"),
 }
 
 # TODO: Set the furthest row down that contains dummy template data for cleanup
