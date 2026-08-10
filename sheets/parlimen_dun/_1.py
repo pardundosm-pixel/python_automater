@@ -13,23 +13,29 @@ HEADER_ANCHOR = "MAKLUMAT ASAS"
 # Format: { Excel_Row: ("Metric_Name", "Year") }
 # ==========================================
 ROW_MAP = {
-    8:  ("luas_kawasan", "2022"),
-    9:  ("luas_kawasan", "2023"),
-    10: ("luas_kawasan", "2024"),
-    12: ("jumlah_penduduk", "2022"),
-    13: ("jumlah_penduduk", "2023"),
-    14: ("jumlah_penduduk", "2024"),
-    16: ("kepadatan_penduduk", "2022"),
-    17: ("kepadatan_penduduk", "2023"),
-    18: ("kepadatan_penduduk", "2024"),
+    8:  ("luas_kawasan", "2023"),
+    9:  ("luas_kawasan", "2024"),
+    10: ("luas_kawasan", "2025"),
+    12: ("jumlah_penduduk", "2023"),
+    13: ("jumlah_penduduk", "2024"),
+    14: ("jumlah_penduduk", "2025"),
+    16: ("kepadatan_penduduk", "2023"),
+    17: ("kepadatan_penduduk", "2024"),
+    18: ("kepadatan_penduduk", "2025"),
     20: ("pru_jumlah_pemilih", "PRU 14"), 
     21: ("pru_jumlah_pemilih", "PRU 15"), 
     23: ("pru_jumlah_undian_oleh_pemilih", "PRU 14"), 
-    24: ("pru_jumlah_undian_oleh_pemilih", "PRU 15")
+    24: ("pru_jumlah_undian_oleh_pemilih", "PRU 15"),
+    26: ("jumlah_kertas_undi_yang_ditolak", "PRU 14"), #variable baru
+    27: ("jumlah_kertas_undi_yang_ditolak", "PRU 15"), #variable baru
+    29: ("bilangan_kertas_undi_yang_dikeluarkan_tetapi_tidak_dimasukkan_ke_dalam_peti_undi_dan_tidak_dikembalikan", "PRU 14"), #variable baru
+    30: ("bilangan_kertas_undi_yang_dikeluarkan_tetapi_tidak_dimasukkan_ke_dalam_peti_undi_dan_tidak_dikembalikan", "PRU 15"), #variable baru
+    32: ("jumlah_kertas_undi_yang_dikeluarkan_dalam_pengundian", "PRU 14"), #variable baru
+    33: ("jumlah_kertas_undi_yang_dikeluarkan_dalam_pengundian", "PRU 15") #variable baru
 }
 
 # The furthest row down that contains dummy template data for cleanup
-MAX_ROW_TO_CLEAN = 24 
+MAX_ROW_TO_CLEAN = 33 
 
 # ==========================================
 # 2. DYNAMIC BOUNDARY SCANNER
@@ -126,8 +132,8 @@ def populate_jadual_1(sheet, hierarchy, report_type):
 
     # 2. Format the specific titles for this Jadual
     # Update the base text here to match Jadual 1.0 (Maklumat Asas)
-    title_bm = f": Maklumat asas bagi {loc_string_bm}, {hierarchy.get('state_name')}, 2022 - 2024"
-    title_en = f": Basic information for {loc_string_en}, {hierarchy.get('state_name')}, 2022 - 2024"
+    title_bm = f": Maklumat asas bagi {loc_string_bm}, {hierarchy.get('state_name')}, 2023 - 2025"
+    title_en = f": Basic information for {loc_string_en}, {hierarchy.get('state_name')}, 2023 - 2025"
 
     # 3. Inject into the sheet (Choose ONE method and comment out the other)
     # Method A: Fixed cell coordinates
