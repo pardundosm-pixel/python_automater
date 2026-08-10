@@ -11,20 +11,20 @@ HEADER_ANCHOR = "KEMISKINAN" # e.g., "MAKLUMAT ASAS" or "KEMISKINAN"
 # TODO: Map the EXCEL ROW NUMBER to a TUPLE of ("METRIC_NAME", "YEAR")
 # Format: { Excel_Row: ("metric_name_in_database", "Year") }
 ROW_MAP = {
-    9:  ("jumlah_keseluruhan_jantina", "2023"),
-    10: ("jumlah_keseluruhan_jantina", "2024"),
-    12: ("jumlah_keseluruhan_miskin_tegar", "2023"),
-    13: ("jumlah_keseluruhan_miskin_tegar", "2024"),
-    15: ("jumlah_miskin_tegar_lelaki", "2023"),
-    16: ("jumlah_miskin_tegar_lelaki", "2024"),
-    18: ("jumlah_miskin_tegar_perempuan", "2023"),
-    19: ("jumlah_miskin_tegar_perempuan", "2024"),
-    21: ("jumlah_keseluruhan_miskin", "2023"),
-    22: ("jumlah_keseluruhan_miskin", "2024"),
-    24: ("jumlah_miskin_lelaki", "2023"),
-    25: ("jumlah_miskin_lelaki", "2024"),
-    27: ("jumlah_miskin_perempuan", "2023"),
-    28: ("jumlah_miskin_perempuan", "2024"),
+    9:  ("jumlah_keseluruhan_jantina", "2024"),
+    10: ("jumlah_keseluruhan_jantina", "2025"),
+    12: ("jumlah_keseluruhan_miskin_tegar", "2024"),
+    13: ("jumlah_keseluruhan_miskin_tegar", "2025"),
+    15: ("jumlah_miskin_tegar_lelaki", "2024"),
+    16: ("jumlah_miskin_tegar_lelaki", "2025"),
+    18: ("jumlah_miskin_tegar_perempuan", "2024"),
+    19: ("jumlah_miskin_tegar_perempuan", "2025"),
+    21: ("jumlah_keseluruhan_miskin", "2024"),
+    22: ("jumlah_keseluruhan_miskin", "2025"),
+    24: ("jumlah_miskin_lelaki", "2024"),
+    25: ("jumlah_miskin_lelaki", "2025"),
+    27: ("jumlah_miskin_perempuan", "2024"),
+    28: ("jumlah_miskin_perempuan", "2025"),
 
 }
 
