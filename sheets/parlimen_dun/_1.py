@@ -26,7 +26,7 @@ ROW_MAP = {
     21: ("pru_jumlah_pemilih", "PRU 15"), 
     23: ("pru_jumlah_undian_oleh_pemilih", "PRU 14"), 
     24: ("pru_jumlah_undian_oleh_pemilih", "PRU 15"),
-    26: ("jumlah_kertas_undi_yang_ditolak", "PRU 14"), #variable baru
+    26: ("jumlah_kertas_undi_yang_ditolak", "PRU 14"), #variable 
     27: ("jumlah_kertas_undi_yang_ditolak", "PRU 15"), #variable baru
     29: ("bilangan_kertas_undi_yang_dikeluarkan_tetapi_tidak_dimasukkan_ke_dalam_peti_undi_dan_tidak_dikembalikan", "PRU 14"), #variable baru
     30: ("bilangan_kertas_undi_yang_dikeluarkan_tetapi_tidak_dimasukkan_ke_dalam_peti_undi_dan_tidak_dikembalikan", "PRU 15"), #variable baru
