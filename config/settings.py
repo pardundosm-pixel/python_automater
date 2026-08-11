@@ -23,3 +23,4 @@ TEMPLATE_PATHS = {
 
 # Output Path
 OUTPUT_DIR = os.path.join(BASE_DIR, 'output')
+OUTPUT_DIR = r"C:\Users\rubiah\Desktop\Subnasional 2026\parlimen_dun_python_code\python_automater\output"  # Hardcoded for testing

@@ -3,7 +3,7 @@ import logging
 import xlwings as xw
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from config.settings import OUTPUT_DIR, BASE_DIR
-from pypdf import PdfMerger
+from pypdf import PdfWriter
 
 # Mute pypdf warnings (prevents terminal spam from misaligned external PDFs)
 logging.getLogger("pypdf").setLevel(logging.ERROR)
@@ -81,7 +81,6 @@ PARLIMEN_BLUEPRINT = [
     ]}
 ]
 
-# (Corrected the swapped filenames and added the known Malaysia sheets)
 MALAYSIA_BLUEPRINT = [
     {"type": "pdf", "filename": "14 malaysia.pdf"},
     {"type": "excel_chunk", "sheets": [
@@ -94,7 +93,6 @@ MALAYSIA_BLUEPRINT = [
 
 NEGERI_BLUEPRINT = [
     {"type": "pdf", "filename": "15 negeri.pdf"},
-    # {"type": "excel_chunk", "sheets": ["42.0", "43.0", etc...]}
 ]
 
 
@@ -121,7 +119,6 @@ def convert_single_file_to_pdf(excel_relative_path):
     base_name = os.path.splitext(os.path.basename(excel_abs_path))[0]
     final_pdf_path = os.path.splitext(excel_abs_path)[0] + '.pdf'
     
-    # 1. Route to the correct blueprint based on the folder path
     if "Parlimen" in excel_abs_path or "DUN" in excel_abs_path:
         blueprint = PARLIMEN_BLUEPRINT
     elif "Negeri" in excel_abs_path:
@@ -134,44 +131,33 @@ def convert_single_file_to_pdf(excel_relative_path):
     app.display_alerts = False
     
     temp_chunks = []
-    merger = PdfMerger()
+    merger = PdfWriter()
     
     try:
         wb = app.books.open(excel_abs_path)
         
-        # 2. Iterate through the Blueprint Recipe
         for i, block in enumerate(blueprint):
-            
-            # --- HANDLE EXTERNAL PDFS (Separators & Auto-Blanks) ---
             if block["type"] == "pdf":
                 sep_path = os.path.join(SEPARATOR_DIR, block["filename"])
                 if os.path.exists(sep_path):
                     merger.append(sep_path)
                     
-                    # Auto-Insert Blank Page immediately after the separator
                     if os.path.exists(BLANK_PAGE_PATH):
                         merger.append(BLANK_PAGE_PATH)
                 else:
                     print(f"  -> [Warning] Missing Separator Asset: {block['filename']}")
             
-            # --- HANDLE EXCEL CHUNKS ---
             elif block["type"] == "excel_chunk":
-                # Ensure the sheets actually exist in the workbook before selecting them
                 valid_sheets = [s for s in block["sheets"] if s in [sht.name for sht in wb.sheets]]
                 
                 if valid_sheets:
-                    # Windows COM Trick: Highlight only the specific group of sheets
                     wb.api.Worksheets(valid_sheets).Select()
-                    
                     chunk_path = os.path.join(os.path.dirname(excel_abs_path), f"temp_chunk_{i}_{base_name}.pdf")
-                    
-                    # 0 is the Windows COM Enum for xlTypePDF (Exports only the highlighted selection)
                     app.api.ActiveSheet.ExportAsFixedFormat(0, chunk_path)
                     
                     temp_chunks.append(chunk_path)
                     merger.append(chunk_path)
                     
-        # 3. Stitch the final sandwich together
         merger.write(final_pdf_path)
         merger.close()
         
@@ -181,14 +167,12 @@ def convert_single_file_to_pdf(excel_relative_path):
         return f"❌ FAILED to convert {base_name} | Error: {e}"
         
     finally:
-        # GUARANTEE Excel Cleanup
         try:
             wb.close()
         except:
             pass
         app.quit()
         
-        # GUARANTEE Temporary Chunk Cleanup
         for chunk in temp_chunks:
             if os.path.exists(chunk):
                 try:
