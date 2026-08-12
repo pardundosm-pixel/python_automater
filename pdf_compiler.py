@@ -151,9 +151,9 @@ def convert_single_file_to_pdf(excel_relative_path):
                 valid_sheets = [s for s in block["sheets"] if s in [sht.name for sht in wb.sheets]]
                 
                 if valid_sheets:
-                    wb.api.Worksheets(valid_sheets).Select()
                     chunk_path = os.path.join(os.path.dirname(excel_abs_path), f"temp_chunk_{i}_{base_name}.pdf")
-                    app.api.ActiveSheet.ExportAsFixedFormat(0, chunk_path)
+
+                    wb.to_pdf(path=chunk_path, include=valid_sheets)
                     
                     temp_chunks.append(chunk_path)
                     merger.append(chunk_path)
