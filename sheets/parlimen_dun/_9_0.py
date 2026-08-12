@@ -115,14 +115,14 @@ def populate_jadual_9(sheet, hierarchy, report_type):
         loc_string_en = f"DUN {hierarchy.get('dun_name')}"
 
     # TODO: Format the specific base text titles for this Jadual
-    title_bm = f": Tajuk BM di sini bagi {loc_string_bm}, {hierarchy.get('state_name')}, 2022 - 2024"
-    title_en = f": English Title here for {loc_string_en}, {hierarchy.get('state_name')}, 2022 - 2024"
+    title_bm = f": Statistik keselamatan awam, {loc_string_bm}, {hierarchy.get('state_name')}, 2022 - 2024"
+    title_en = f": Statistics of public safety, {loc_string_en}, {hierarchy.get('state_name')}, 2022 - 2024"
 
     # TODO: Inject into the sheet (Choose ONE method and comment out the other)
     
     # Method A: Fixed cell coordinates (if the title never moves rows)
-    # sheet.range("C3").value = title_bm
-    # sheet.range("C4").value = title_en
+    sheet.range("C3").value = title_bm
+    sheet.range("C4").value = title_en
     
     # Method B: Dynamic coordinates based on Target Row (if the title shifts with the table)
     # sheet.range((target_row - 2, 3)).value = title_bm  # Assuming Column C is Index 3
