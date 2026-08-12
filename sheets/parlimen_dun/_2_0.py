@@ -15,7 +15,7 @@ ROW_MAP = {
     18: "peratus_penduduk_warganegara",
     19: "peratus_penduduk_bukan_warganegara",
     21: "purata_pertumbuhan_penduduk",
-    26: "peratus_bumiputera",
+    26: "peratus_penduduk_bumiputera",
     27: "peratus_penduduk_cina",
     28: "peratus_penduduk_india",
     29: "peratus_penduduk_lain_lain",
