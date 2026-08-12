@@ -1,14 +1,14 @@
 import os
 import xlwings as xw
 from config.settings import TEMPLATE_PATHS, OUTPUT_DIR
-from src.data_provider import get_location_hierarchy, get_dun_hierarchy
+from src.data_provider import get_location_hierarchy, get_dun_hierarchy, get_negeri_hierarchy
 
 # ==========================================
 # 1. IMPORT YOUR SHEET MAPPERS
 # ==========================================
 # (Parlimen & DUN Template Mappers)
 from sheets.parlimen_dun._1 import populate_jadual_1 as jadual_1
-from sheets.parlimen_dun._2 import populate_jadual_2 as jadual_2
+from sheets.parlimen_dun._2_0 import populate_jadual_2 as jadual_2
 from sheets.parlimen_dun._2_1 import populate_jadual_2_1 as jadual_2_1    
 from sheets.parlimen_dun._2_2 import populate_jadual_2_2 as jadual_2_2    
 from sheets.parlimen_dun._2_3 import populate_jadual_2_3 as jadual_2_3    
@@ -40,6 +40,9 @@ from sheets.malaysia._14_1 import populate_jadual_14_1 as jadual_14_1_malaysia
 from sheets.malaysia._20_0 import populate_jadual_20 as jadual_20_malaysia
 from sheets.malaysia._31_0 import populate_jadual_31 as jadual_31_malaysia
 
+# (Negeri Template Mappers)
+from sheets.negeri._42_1 import populate_jadual_42_1 as jadual_42_1_negeri
+
 
 # ==========================================
 # 2. BUILD THE NESTED ROUTING REGISTRY
@@ -47,45 +50,45 @@ from sheets.malaysia._31_0 import populate_jadual_31 as jadual_31_malaysia
 MASTER_REGISTRY = {
     # Profile 1: The standard Parlimen & DUN template
     "parlimen_dun": {
-        "1.0_Maklumat_Asas": jadual_1,
+        # "1.0_Maklumat_Asas": jadual_1,
         "2.0_Penduduk_Malaysia": jadual_2,
         "2.1_Penduduk_Negeri": jadual_2_1,
         "2.2_Penduduk_Parlimen": jadual_2_2,
         "2.3_Penduduk": jadual_2_3,
-        "3.0_Perumahan": jadual_3,
-        "4.0_Guna_Tenaga": jadual_4,
-        "5.0_Pendapatan": jadual_5,
-        "6.0_Pendidikan_SK": jadual_6,
-        "6.1_Pendidikan_Swasta": jadual_6_1,
-        "7.0_Kesihatan": jadual_7,
-        "8.0_Jantina": jadual_8,
-        "8.1_Etnik": jadual_8_1,
-        "8.2_Agama": jadual_8_2,
-        "8.3_Umur": jadual_8_3,
-        "9.0_Keselamatan_Awam": jadual_9,
-        "10.0_IMS": jadual_10,
-        "11.0_Air_Elektrik_Sampah": jadual_11,
-        "12.0_Pertubuhan": jadual_12,
-        "12.1_Prtubuhn_Perkhdmtn": jadual_12_1,
-        "12.1_Prtubuhn_Perkhdmtn_(samb.)": jadual_12_1_1,
-        "12.2_Kemudahan_Asas": jadual_12_2,
-        "13.0_Fasiliti_awam": jadual_13,
-        "13.0_Fasiliti_awam_samb": jadual_13_0_1,
-        "13.1_Statistik_Perkhid._lain": jadual_13_1,
-        "13.2_Koperasi": jadual_13_2
+        # "3.0_Perumahan": jadual_3,
+        # "4.0_Guna_Tenaga": jadual_4,
+        # "5.0_Pendapatan": jadual_5,
+        # "6.0_Pendidikan_SK": jadual_6,
+        # "6.1_Pendidikan_Swasta": jadual_6_1,
+        # "7.0_Kesihatan": jadual_7,
+        # "8.0_Jantina": jadual_8,
+        # "8.1_Etnik": jadual_8_1,
+        # "8.2_Agama": jadual_8_2,
+        # "8.3_Umur": jadual_8_3,
+        # "9.0_Keselamatan_Awam": jadual_9,
+        # "10.0_IMS": jadual_10,
+        # "11.0_Air_Elektrik_Sampah": jadual_11,
+        # "12.0_Pertubuhan": jadual_12,
+        # "12.1_Prtubuhn_Perkhdmtn": jadual_12_1,
+        # "12.1_Prtubuhn_Perkhdmtn_(samb.)": jadual_12_1_1,
+        # "12.2_Kemudahan_Asas": jadual_12_2,
+        # "13.0_Fasiliti_awam": jadual_13,
+        # "13.0_Fasiliti_awam_samb": jadual_13_0_1,
+        # "13.1_Statistik_Perkhid._lain": jadual_13_1,
+        # "13.2_Koperasi": jadual_13_2
     },
     
     # Profile 2: Malaysia
     "malaysia": {
-        "14.0_KDNK": jadual_14_malaysia, 
-        "14.0_KDNK_1": jadual_14_1_malaysia
+        # "14.0_KDNK": jadual_14_malaysia, 
+        # "14.0_KDNK_1": jadual_14_1_malaysia
         # "20.0": jadual_20_malaysia,
         # "31.0": jadual_31_malaysia
     },
     
     # Profile 3: Negeri
     "negeri": {
-        # Future Negeri Mappers will go here
+        "42.1_KDNK": jadual_42_1_negeri
     }
 }
 
@@ -103,7 +106,7 @@ def generate_report(location_code: str, report_type: str, excel_app: xw.App, par
     elif report_type == 'dun':
         hierarchy = get_dun_hierarchy(location_code, parent_code)
     elif report_type == 'negeri':
-        hierarchy = {'state_code': location_code, 'state_name': 'Unknown_State'}
+        hierarchy = get_negeri_hierarchy(location_code)
     elif report_type == 'malaysia':
         hierarchy = {'state_name': 'Malaysia', 'location_name': 'Malaysia', 'state_code': '00'}
     else:

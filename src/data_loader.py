@@ -1,3 +1,4 @@
+# data_loader.py (added progress print)
 import pandas as pd
 from config.settings import DATABASE_PATH
 

@@ -117,14 +117,14 @@ def populate_jadual_3(sheet, hierarchy, report_type):
     # 1. Determine the correct location string based on the report type
     if report_type == 'parlimen':
         loc_string_bm = f"Parlimen {hierarchy.get('parl_name')}"
-        loc_string_en = f"Parlimen {hierarchy.get('parl_name')}"
+        loc_string_en = f"Parliament {hierarchy.get('parl_name')}"
     else:
         loc_string_bm = f"DUN {hierarchy.get('dun_name')}"
         loc_string_en = f"DUN {hierarchy.get('dun_name')}"
 
     # TODO: Format the specific base text titles for this Jadual
-    title_bm = f": Tajuk BM di sini bagi {loc_string_bm}, {hierarchy.get('state_name')}, 2022 - 2024"
-    title_en = f": English Title here for {loc_string_en}, {hierarchy.get('state_name')}, 2022 - 2024"
+    title_bm = f": Statistik isi rumah mengikut jenis rumah yang didiami, {loc_string_bm}, {hierarchy.get('state_name')}, 2019 - 2022"
+    title_en = f": Statistics of household by type of occupied dwelling, {loc_string_en}, {hierarchy.get('state_name')}, 2019 - 2022"
 
     # TODO: Inject into the sheet (Choose ONE method and comment out the other)
     

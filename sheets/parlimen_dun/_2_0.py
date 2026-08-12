@@ -2,10 +2,10 @@ import pandas as pd
 from src.data_provider import get_metrics_dict
 
 # ==========================================
-# MAPPING CONFIGURATION FOR JADUAL 2.1 (NEGERI)
+# MAPPING CONFIGURATION FOR JADUAL 2.0 (MALAYSIA)
 # ==========================================
 # TODO: Map the EXCEL ROW NUMBER to the METRIC NAME in the database
-# Example: 7: "jumlah_penduduk", 11: "warganegara"
+# Example: 8: "jumlah_penduduk", 12: "warganegara"
 ROW_MAP = {
     7:  "jumlah_penduduk",
     11: "penduduk_warganegara",
@@ -32,6 +32,7 @@ ROW_MAP = {
 }
 
 # TODO: Map the EXCEL COLUMN NUMBER to the YEAR STRING
+# Example: If Column D is 2023, Column D is index 4.
 COL_MAP = {
     4: "2024",  
     5: "2025",  
@@ -42,9 +43,9 @@ COL_MAP = {
 # 2. REPORT INJECTION ENGINE
 # ==========================================
 # TODO: Rename the function to match the specific jadual (e.g., populate_jadual_2_2)
-def populate_jadual_2_1(sheet, hierarchy, report_type):
-    # Even though the report is running for P.143, Jadual 2.1 is ALWAYS Malaysia data
-    print(f"  -> Populating Jadual 2.1 (Negeri) for {hierarchy['state_name']}")
+def populate_jadual_2(sheet, hierarchy, report_type):
+    # Even though the report is running for P.143, Jadual 2.0 is ALWAYS Malaysia data
+    print(f"  -> Populating Jadual 2.0 (Malaysia)")
 
     # 1. Fetch the Data Payload strictly for Malaysia
     metrics_data = get_metrics_dict("Malaysia", level='malaysia')
@@ -56,8 +57,8 @@ def populate_jadual_2_1(sheet, hierarchy, report_type):
     # ==========================================
     # DYNAMIC TABLE TITLE MODIFICATION
     # ==========================================
-    title_bm = f": Anggaran penduduk pertengahan tahun, {hierarchy['state_name']}, 2024 - 2026p"
-    title_en = f": Mid-year population estimates, {hierarchy['state_name']}, 2024 - 2026p"
+    title_bm = ": Anggaran penduduk pertengahan tahun, Malaysia, 2024 - 2026p"
+    title_en = ": Mid-year population estimates, Malaysia, 2024 - 2026p"
 
     # Set the exact cells where your title sits in the template
     sheet.range("C2").value = title_bm
