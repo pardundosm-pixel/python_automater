@@ -79,6 +79,13 @@ def get_metrics_dict(location_code: str, level: str, parent_code: str = None):
             v = v[:-2]
         return v.zfill(2)
 
+    def _norm_daerah_code(value):
+        # State and District codes are usually 2-digit, zero-padded ("01", "02").
+        v = str(value).strip()
+        if v.endswith('.0'):
+            v = v[:-2]
+        return v.zfill(2)
+
     location_code_norm = str(location_code).strip()
     if location_code_norm.endswith('.0'):
         location_code_norm = location_code_norm[:-2]
@@ -97,6 +104,24 @@ def get_metrics_dict(location_code: str, level: str, parent_code: str = None):
         df = db.fact_negeri
         target = _norm_negeri_code(location_code)
         mask = df['kod_negeri'].apply(_norm_negeri_code) == target
+
+    elif level == 'daerah':
+        df = db.fact_daerah
+        
+        # --- NEW: Handle State Total inside fact_daerah (empty kod_daerah) ---
+        if location_code == "STATE_TOTAL":
+            # Catch all pandas variations of an empty/null cell
+            mask = df['kod_daerah'].isna() | \
+                    (df['kod_daerah'].astype(str).str.strip() == '') | \
+                    (df['kod_daerah'].astype(str).str.lower() == 'nan') | \
+                    (df['kod_daerah'].astype(str).str.lower() == 'n.a.')
+        else:
+            target = _norm_daerah_code(location_code)
+            mask = df['kod_daerah'].apply(_norm_daerah_code) == target
+            
+        if parent_code:
+            parent_target = _norm_negeri_code(parent_code)
+            mask = mask & (df['kod_negeri'].apply(_norm_negeri_code) == parent_target)
 
     elif level == 'malaysia':
         df = db.fact_malaysia

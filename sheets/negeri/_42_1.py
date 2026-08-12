@@ -4,115 +4,109 @@ from src.data_provider import get_metrics_dict
 # ==========================================
 # 1. MAPPING & PAGINATION CONFIGURATION
 # ==========================================
-# Define the exact names of the sheets in the template handling this table
-PAGINATED_SHEETS = ["42.1", "42.1 (2)", "42.1 (3)"]
+# TODO: Update these column indices based on where data lives in the new Jadual
+COL_DISTRICT = 2  # e.g., Column B
+COL_YEAR = 5      # e.g., Column E
+COL_VALUE = 8     # e.g., Column H
+COL_PCT = 9       # e.g., Column I
 
-# Grid layout definition
-START_ROW = 11        # The first row of data on every sheet
-ROWS_PER_BLOCK = 4    # 3 years of data + 1 blank separator row
-MAX_BLOCKS_PER_SHEET = 6 # E.g., Rows 11, 15, 19, 23, 27, 31
-
-# Column Indices mapping
-COL_DISTRICT = 2  # Column B
-COL_YEAR = 5      # Column E
-COL_VALUE = 8     # Column H (Nilai)
-COL_PCT = 9       # Column I (Peratus)
-
-# Offset mapping for the 3 years within a district block
+# TODO: Adjust the years being mapped. 
+# The dictionary key (0, 1, 2) represents how many rows down from the block's start row the year sits.
 YEAR_OFFSETS = {
     0: "2018",
     1: "2019",
     2: "2020"
 }
 
+# TODO: Define the exact row where the State (Negeri) total is printed.
+STATE_START_ROW = 11
+
+# TODO: Recalculate these block start rows based on the new template's layout.
+# - The first number in the bracket (e.g., 15) is the starting row for that specific page.
+# - The multiplier (e.g., 4) is the height of each district block (3 years + 1 blank separator row).
+# - The range (e.g., 15) is the maximum number of districts that can fit on that page.
+BLOCK_START_ROWS = (
+    [15 + (i * 4) for i in range(15)] +  # Page 1 blocks
+    [85 + (i * 4) for i in range(13)] +  # Page 2 blocks
+    [151 + (i * 4) for i in range(14)]   # Page 3 blocks
+)
+
+# TODO: Update these cell coordinates if the titles are placed in different cells in the new template.
+TITLE_COORDINATES = [
+    {"bm": "C2", "en": "C3", "is_samb": False},     # Page 1 Title
+    {"bm": "C76", "en": "C77", "is_samb": True},    # Page 2 Title
+    {"bm": "C142", "en": "C143", "is_samb": True}   # Page 3 Title
+]
+
 # ==========================================
 # 2. REPORT INJECTION ENGINE
 # ==========================================
+# TODO: Rename this function to match your new Jadual (e.g., populate_jadual_54_0)
 def populate_jadual_42_1(sheet, hierarchy, report_type):
-    # Prevent the engine from running this logic 3 separate times if it loops through all sheets.
-    # We will orchestrate all 3 sheets directly from the first sheet's trigger.
-    if sheet.name != PAGINATED_SHEETS[0]:
-        return
-
     state_name = hierarchy.get('state_name', 'Unknown State')
-    state_code = hierarchy.get('state_code')
-    print(f"  -> Populating Jadual 42.1 (KDNK Daerah) across multiple sheets untuk {state_name}")
+    state_code = hierarchy.get('state_code', '00')
+    districts = hierarchy.get('districts', [])
 
-    wb = sheet.book
+    # 1. Title Generation
+    # TODO: Update the base title text to reflect the metrics of the new Jadual
+    title_bm_base = f": Keluaran Dalam Negeri Kasar (KDNK) mengikut daerah pentadbiran, {state_name}, 2018 - 2020"
+    title_en_base = f": Gross Domestic Product (GDP) by administrative district, {state_name}, 2018 - 2020"
     
-    # 1. Fetch the districts for this specific state
-    # (Assuming a helper function exists in data_provider to list a state's districts)
-    from src.data_provider import get_districts_for_state
-    districts = get_districts_for_state(state_code) 
-    
-    if not districts:
-        print(f"     [Warning] No districts found for {state_name}.")
-        return
+    for coords in TITLE_COORDINATES:
+        suffix_bm = " (samb.)" if coords["is_samb"] else ""
+        suffix_en = " (cont'd)" if coords["is_samb"] else ""
+        sheet.range(coords["bm"]).value = title_bm_base + suffix_bm
+        sheet.range(coords["en"]).value = title_en_base + suffix_en
 
-    # 2. Setup Title Strings
-    title_bm = f": Keluaran Dalam Negeri Kasar (KDNK) mengikut daerah pentadbiran, {state_name}, 2018 - 2020"
-    title_en = f": Gross Domestic Product (GDP) by administrative district, {state_name}, 2018 - 2020"
+    # 2. State-Level Data Injection
+    sheet.range((STATE_START_ROW, COL_DISTRICT)).value = state_name.upper()
+    state_metrics = get_metrics_dict("STATE_TOTAL", level='daerah', parent_code=state_code)
     
-    title_bm_samb = title_bm + " (samb.)"
-    title_en_samb = title_en + " (cont'd)"
+    for offset, year in YEAR_OFFSETS.items():
+        target_row = STATE_START_ROW + offset
+        year_data = state_metrics.get(year, {})
+        
+        # TODO: Change the dictionary keys here to match the specific database metrics you want to pull
+        val_kdnk = year_data.get("kdnk_mengikut_jenis_aktiviti_ekonomi_pada_harga_malar_2015_rm_juta", "n.a")
+        val_pct = year_data.get("peratus_perubahan_peratusan_tahunan", "n.a")
+        
+        sheet.range((target_row, COL_VALUE)).value = float(val_kdnk) if pd.notna(val_kdnk) and val_kdnk not in ["n.a", ""] else "n.a"
+        sheet.range((target_row, COL_PCT)).value = float(val_pct) if pd.notna(val_pct) and val_pct not in ["n.a", ""] else "n.a"
 
-    district_idx = 0
+    # 3. District-Level Data Injection & Cleanup 
     total_districts = len(districts)
-
-    # 3. Iterate through the designated sheets
-    for sheet_idx, sheet_name in enumerate(PAGINATED_SHEETS):
-        try:
-            current_sheet = wb.sheets[sheet_name]
-        except Exception:
-            continue # Skip if the template doesn't have this specific continuation sheet
-
-        # Update Titles for the current sheet
-        if sheet_idx == 0:
-            current_sheet.range("C2").value = title_bm
-            current_sheet.range("C3").value = title_en
-        else:
-            current_sheet.range("C2").value = title_bm_samb
-            current_sheet.range("C3").value = title_en_samb
-
-        # Check if we have already plotted all districts. If yes, hide this sheet and skip.
-        if district_idx >= total_districts:
-            current_sheet.api.Visible = False # Hide unused template sheets from the final Excel
-            continue
-
-        # 4. Inject Data into Blocks
-        for block_idx in range(MAX_BLOCKS_PER_SHEET):
-            base_row = START_ROW + (block_idx * ROWS_PER_BLOCK)
+    
+    for district_idx, base_row in enumerate(BLOCK_START_ROWS):
+        if district_idx < total_districts:
+            dist_code = districts[district_idx]['code']
+            sheet.range((base_row, COL_DISTRICT)).value = districts[district_idx]['name']
             
-            if district_idx < total_districts:
-                # --- INJECT DISTRICT DATA ---
-                district_info = districts[district_idx]
-                dist_code = district_info['code']
-                dist_name = district_info['name']
+            dist_metrics = get_metrics_dict(dist_code, level='daerah', parent_code=state_code)
+            
+            for offset, year in YEAR_OFFSETS.items():
+                target_row = base_row + offset
+                year_data = dist_metrics.get(year, {})
                 
-                # Write District Name (Only on the first row of the block)
-                current_sheet.range((base_row, COL_DISTRICT)).value = dist_name
+                # TODO: Change these dictionary keys to match the state-level metrics above
+                val_kdnk = year_data.get("kdnk_mengikut_jenis_aktiviti_ekonomi_pada_harga_malar_2015_rm_juta", "n.a")
+                val_pct = year_data.get("peratus_perubahan_peratusan_tahunan", "n.a")
                 
-                # Fetch metrics for this specific district
-                metrics_data = get_metrics_dict(dist_code, level='daerah')
-                
-                # Loop through the 3 years
-                for offset, year in YEAR_OFFSETS.items():
-                    target_row = base_row + offset
-                    year_data = metrics_data.get(year, {})
-                    
-                    # Extract Data
-                    val_kdnk = year_data.get("kdnk_harga_malar_nilai", "n.a")
-                    val_pct = year_data.get("kdnk_harga_malar_peratus", "n.a")
-                    
-                    # Sanitize and write Value
-                    current_sheet.range((target_row, COL_VALUE)).value = float(val_kdnk) if pd.notna(val_kdnk) and val_kdnk not in ["n.a", ""] else "n.a"
-                    
-                    # Sanitize and write Percentage
-                    current_sheet.range((target_row, COL_PCT)).value = float(val_pct) if pd.notna(val_pct) and val_pct not in ["n.a", ""] else "n.a"
-                
-                district_idx += 1
-                
-            else:
-                # --- CLEANUP UNUSED DUMMY BLOCKS ---
-                # Wipe the District Name, Years, and Values to leave a blank grid
-                current_sheet.range((base_row, COL_DISTRICT), (base_row + 2, COL_PCT)).value = None
+                # TODO: If your new Jadual has different columns or requires less variables, update this writing block
+                sheet.range((target_row, COL_VALUE)).value = float(val_kdnk) if pd.notna(val_kdnk) and val_kdnk not in ["n.a", ""] else "n.a"
+                sheet.range((target_row, COL_PCT)).value = float(val_pct) if pd.notna(val_pct) and val_pct not in ["n.a", ""] else "n.a"
+        else:
+            # Wipe the dummy row clean if no district exists for this slot
+            sheet.range((base_row, COL_DISTRICT), (base_row + len(YEAR_OFFSETS), COL_PCT)).value = None
+
+    # 4. Dynamic Page Elimination (Cleanup unused pages)
+    # TODO: Adjust the `total_districts` threshold limits based on how many blocks fit on your new template's pages.
+    # TODO: Adjust the `.delete()` row ranges (e.g., '75:300') to precisely target where Page 2 and Page 3 begin in the new template.
+    if total_districts <= 15:
+        # State only needs 1 page. Delete Page 2 and Page 3 entirely.
+        print("     [FORMAT] State only needs 1 page. Eliminating Page 2 and 3.")
+        sheet.range('75:300').delete()
+        
+    elif total_districts <= 28:
+        # State needs 2 pages. Delete Page 3 entirely.
+        print("     [FORMAT] State needs 2 pages. Eliminating Page 3.")
+        sheet.range('141:300').delete()
