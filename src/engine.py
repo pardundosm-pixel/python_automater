@@ -42,7 +42,8 @@ from sheets.malaysia._31_0 import populate_jadual_31 as jadual_31_malaysia
 
 # (Negeri Template Mappers)
 from sheets.negeri._42_1 import populate_jadual_42_1 as jadual_42_1_negeri
-
+from sheets.negeri._42_0 import populate_jadual_42 as jadual_42_negeri
+from sheets.negeri._43_0 import populate_jadual_43 as jadual_43_negeri
 
 # ==========================================
 # 2. BUILD THE NESTED ROUTING REGISTRY
@@ -83,12 +84,15 @@ MASTER_REGISTRY = {
         # "14.0_KDNK": jadual_14_malaysia, 
         # "14.0_KDNK_1": jadual_14_1_malaysia
         # "20.0": jadual_20_malaysia,
-        # "31.0": jadual_31_malaysia
+        # "31.0": jadual_31_malaysia,
     },
     
     # Profile 3: Negeri
     "negeri": {
-        "42.1_KDNK": jadual_42_1_negeri
+        "42.1_KDNK": jadual_42_1_negeri,
+        "42.0_KDNK": jadual_42_negeri,
+        "43.0_Dagangan": jadual_43_negeri
+        # Future Negeri Mappers will go here
     }
 }
 

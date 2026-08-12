@@ -7,23 +7,23 @@ from src.data_provider import get_metrics_dict
 # Map the EXCEL ROW NUMBER to the METRIC NAME in the database
 ROW_MAP = {
     # Nilai (Value) - RM juta
-    8:  "eksport_nilai",
-    11: "import_nilai",
-    14: "jumlah_dagangan_nilai",
-    17: "imbangan_dagangan_nilai",
+    8:  "eksport",
+    11: "import",
+    14: "jumlah_dagangan",
+    17: "imbangan_dagangan",
     
     # Pertumbuhan Tahunan (Annual Growth) - %
-    20: "eksport_peratus",
-    23: "import_peratus",
-    26: "jumlah_dagangan_peratus"
+    20: "peratus_eksport",
+    23: "peratus_import",
+    26: "peratus_jumlah_dagangan"
 }
 
 # Map the EXCEL COLUMN NUMBER to the YEAR STRING
 # Based on screenshot: Column G = 7, Column H = 8, Column I = 9
 COL_MAP = {
-    7: "2022",  
-    8: "2023",  
-    9: "2024"   
+    7: "2023",  
+    8: "2024",  
+    9: "2025"   
 }
 
 # ==========================================
@@ -44,8 +44,8 @@ def populate_jadual_43(sheet, hierarchy, report_type):
     # ==========================================
     # DYNAMIC TABLE TITLE MODIFICATION
     # ==========================================
-    title_bm = f": Eksport, import, jumlah dagangan dan imbangan dagangan, {state_name} (RM juta), 2022 - 2024p"
-    title_en = f": Exports, imports, total trade and balance of trade, {state_name} (RM million), 2022 - 2024p"
+    title_bm = f": Eksport, import, jumlah dagangan dan imbangan dagangan, {state_name} (RM juta), 2023 - 2025p"
+    title_en = f": Exports, imports, total trade and balance of trade, {state_name} (RM million), 2023 - 2025p"
 
     # Set the exact cells where your title sits in the template (Column C)
     sheet.range("C3").value = title_bm
