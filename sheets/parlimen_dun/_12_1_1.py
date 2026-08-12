@@ -19,7 +19,7 @@ ROW_MAP = {
 }
 
 # TODO: Set the furthest row down that contains dummy template data for cleanup
-MAX_ROW_TO_CLEAN = 50 # Adjust based on how far down the template's dummy data goes
+MAX_ROW_TO_CLEAN = 35 # Adjust based on how far down the template's dummy data goes
 
 # ==========================================
 # 2. DYNAMIC BOUNDARY SCANNER (Universal)

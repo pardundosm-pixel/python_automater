@@ -19,10 +19,7 @@ ROW_MAP = {
     26: ("perlombongan_pengkuarian", "2025"),
     29: ("pembuatan", "2025"),
     32: ("pembinaan", "2025"),
-    35: ("perkhidmatan", "2025"),
-    41: ("pks_mikro", "2025"),
-    44: ("pks_kecil", "2025"),
-    47: ("pks_sederhana", "2025"),
+    35: ("perkhidmatan", "2025")
 }
 
 # TODO: Set the furthest row down that contains dummy template data for cleanup

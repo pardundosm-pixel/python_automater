@@ -77,10 +77,10 @@ MASTER_REGISTRY = {
     
     # Profile 2: Malaysia
     "malaysia": {
-        "14.0": jadual_14_malaysia, 
-        "14.1": jadual_14_1_malaysia,
-        "20.0": jadual_20_malaysia,
-        "31.0": jadual_31_malaysia
+        "14.0_KDNK": jadual_14_malaysia, 
+        "14.0_KDNK_1": jadual_14_1_malaysia
+        # "20.0": jadual_20_malaysia,
+        # "31.0": jadual_31_malaysia
     },
     
     # Profile 3: Negeri
