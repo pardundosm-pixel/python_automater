@@ -54,7 +54,7 @@ COL_MAP = {
 # ==========================================
 # 2. REPORT INJECTION ENGINE
 # ==========================================
-def populate_jadual_14(sheet, hierarchy, report_type):
+def populate_jadual_14_0(sheet, hierarchy, report_type):
     print(f"  -> Populating Jadual 14.0 (KDNK) untuk Malaysia")
 
     # 1. Fetch the Data Payload strictly for Malaysia

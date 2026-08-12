@@ -2,7 +2,7 @@ import pandas as pd
 from src.data_provider import get_metrics_dict
 
 # ==========================================
-# MAPPING CONFIGURATION FOR JADUAL 14.1 (NEGERI)
+# MAPPING CONFIGURATION FOR JADUAL 14.1 (MALAYSIA)
 # ==========================================
 # TODO: Map the EXCEL ROW NUMBER to the METRIC NAME in the database
 # Example: 7: "jumlah_penduduk", 11: "warganegara"
@@ -66,7 +66,7 @@ def populate_jadual_14_1(sheet, hierarchy, report_type):
     # ==========================================
         # DYNAMIC TABLE TITLE MODIFICATION
     # ==========================================
-    title_bm = ": Keluaran Dalam Negeri Kasar (KDNK), Malaysia, 2023 - 2025 (sambungan)"
+    title_bm = ": Keluaran Dalam Negeri Kasar (KDNK), Malaysia, 2023 - 2025 (samb.)"
     title_en = ": Gross Domestic Product (GDP), Malaysia, 2023 - 2025 (cont'd)"
         
     # Set the exact cells where your title sits in the template
