@@ -11,46 +11,46 @@ HEADER_ANCHOR = "PENDIDIKAN" # e.g., "MAKLUMAT ASAS" or "KEMISKINAN"
 # TODO: Map the EXCEL ROW NUMBER to a TUPLE of ("METRIC_NAME", "YEAR")
 # Format: { Excel_Row: ("metric_name_in_database", "Year") }
 ROW_MAP = {
-    9: ('bilangan_sekolah', '2023'),
-    10: ('bilangan_sekolah', '2024'),
-    12: ('bilangan_sekolah_rendah', '2023'),
-    13: ('bilangan_sekolah_rendah', '2024'),
-    15: ('bilangan_sekolah_menengah', '2023'),
-    16: ('bilangan_sekolah_menengah', '2024'),
-    18: ('bilangan_guru', '2023'),
-    19: ('bilangan_guru', '2024'),
-    21: ('bilangan_guru_rendah', '2023'),
-    22: ('bilangan_guru_rendah', '2024'),
-    24: ('bilangan_guru_menengah', '2023'),
-    25: ('bilangan_guru_menengah', '2024'),
-    27: ('bilangan_murid', '2023'),
-    28: ('bilangan_murid', '2024'),
-    30: ('bilangan_murid_rendah', '2023'),
-    31: ('bilangan_murid_rendah', '2024'),
-    33: ('bilangan_murid_menengah', '2023'),
-    34: ('bilangan_murid_menengah', '2024'),
-    36: ('sekolah_1sesi', '2023'),
-    37: ('sekolah_1sesi', '2024'),
-    39: ('sekolah_rendah_1sesi', '2023'),
-    40: ('sekolah_rendah_1sesi', '2024'),
-    42: ('sekolah_menengah_1sesi', '2023'),
-    43: ('sekolah_menengah_1sesi', '2024'),
-    45: ('sekolah_2sesi', '2023'),
-    46: ('sekolah_2sesi', '2024'),
-    48: ('sekolah_rendah_2sesi', '2023'),
-    49: ('sekolah_rendah_2sesi', '2024'),
-    51: ('sekolah_menengah_2sesi', '2023'),
-    52: ('sekolah_menengah_2sesi', '2024'),
-    54: ('bilangan_bilik_darjah', '2023'),
-    55: ('bilangan_bilik_darjah', '2024'),
-    57: ('bilangan_bilik_darjah_rendah', '2023'),
-    58: ('bilangan_bilik_darjah_rendah', '2024'),
-    60: ('bilangan_bilik_darjah_menengah', '2023'),
-    61: ('bilangan_bilik_darjah_menengah', '2024'),
+    9: ('bilangan_sekolah', '2024'), #tukar tahun
+    10: ('bilangan_sekolah', '2025'),
+    12: ('bilangan_sekolah_rendah', '2024'),
+    13: ('bilangan_sekolah_rendah', '2025'),
+    15: ('bilangan_sekolah_menengah', '2024'),
+    16: ('bilangan_sekolah_menengah', '2025'),
+    18: ('bilangan_guru', '2024'),
+    19: ('bilangan_guru', '2025'),
+    21: ('bilangan_guru_rendah', '2024'),
+    22: ('bilangan_guru_rendah', '2025'),
+    24: ('bilangan_guru_menengah', '2024'),
+    25: ('bilangan_guru_menengah', '2025'),
+    27: ('bilangan_murid', '2024'),
+    28: ('bilangan_murid', '2025'),
+    30: ('bilangan_murid_rendah', '2024'),
+    31: ('bilangan_murid_rendah', '2025'),
+    33: ('bilangan_murid_menengah', '2024'),
+    34: ('bilangan_murid_menengah', '2025'),
+    36: ('sekolah_1sesi', '2024'), #tiada dalam database
+    37: ('sekolah_1sesi', '2025'), #tiada dalam database
+    39: ('sekolah_rendah_1sesi', '2024'),
+    40: ('sekolah_rendah_1sesi', '2025'),
+    42: ('sekolah_menengah_1sesi', '2024'),
+    43: ('sekolah_menengah_1sesi', '2025'),
+    45: ('sekolah_2sesi', '2024'), #tiada dalam database
+    46: ('sekolah_2sesi', '2025'), #tiada dalam database
+    48: ('sekolah_rendah_2sesi', '2024'),
+    49: ('sekolah_rendah_2sesi', '2025'),
+    51: ('sekolah_menengah_2sesi', '2024'),
+    52: ('sekolah_menengah_2sesi', '2025'),
+    54: ('bilangan_bilik_darjah', '2024'),
+    55: ('bilangan_bilik_darjah', '2025'),
+    57: ('bilangan_bilik_darjah_rendah', '2024'),
+    58: ('bilangan_bilik_darjah_rendah', '2025'),
+    60: ('bilangan_bilik_darjah_menengah', '2024'),
+    61: ('bilangan_bilik_darjah_menengah', '2025'),
 }
 
 # TODO: Set the furthest row down that contains dummy template data for cleanup
-MAX_ROW_TO_CLEAN = 50 # Adjust based on how far down the template's dummy data goes
+MAX_ROW_TO_CLEAN = 62 # Adjust based on how far down the template's dummy data goes
 
 # ==========================================
 # 2. DYNAMIC BOUNDARY SCANNER (Universal)
