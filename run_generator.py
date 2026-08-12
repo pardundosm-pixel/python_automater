@@ -6,7 +6,7 @@ from src.data_loader import db
 # CONFIGURATION
 # ==========================================
 TEST_MODE = True
-TARGET_TEMPLATE = "malaysia"  # NEW: Specifies which template profile to process
+TARGET_TEMPLATE = "negeri"  # Options: "negeri" or "parlimen_dun"
 TARGET_STATE = "01"
 TARGET_PARLIMEN = "P.143"
 TARGET_DUN = "N.07"
@@ -44,26 +44,47 @@ if __name__ == "__main__":
     app.display_alerts = False
     
     try:
+        # ==========================================
+        # SURGICAL TEST MODE
+        # ==========================================
         if TEST_MODE:
             print("\n=============================================")
             print(f"[TEST MODE ACTIVE] Executing surgical run...")
             print("=============================================")
-            # 1. Run target Parliament
-            generate_report(
-                location_code=TARGET_PARLIMEN, 
-                report_type='parlimen', 
-                excel_app=app,
-                template_key=TARGET_TEMPLATE
-            )
-            # 2. Run target DUN (Passing the Parent Parliament for strict matching)
-            generate_report(
-                location_code=TARGET_DUN, 
-                report_type='dun', 
-                excel_app=app, 
-                parent_code=TARGET_PARLIMEN,
-                template_key=TARGET_TEMPLATE
-            )
             
+            if TARGET_TEMPLATE == "negeri":
+                print("--- Testing Phase C: Negeri Report ---")
+                generate_report(
+                    location_code=TARGET_STATE, 
+                    report_type='negeri', 
+                    excel_app=app,
+                    template_key=TARGET_TEMPLATE
+                )
+                
+            elif TARGET_TEMPLATE == "parlimen_dun":
+                # 1. Run target Parliament
+                print("--- Testing Phase A: Parliament Report ---")
+                generate_report(
+                    location_code=TARGET_PARLIMEN, 
+                    report_type='parlimen', 
+                    excel_app=app,
+                    template_key=TARGET_TEMPLATE
+                )
+                # 2. Run target DUN (Passing the Parent Parliament for strict matching)
+                print("\n--- Testing Phase B: DUN Report ---")
+                generate_report(
+                    location_code=TARGET_DUN, 
+                    report_type='dun', 
+                    excel_app=app, 
+                    parent_code=TARGET_PARLIMEN,
+                    template_key=TARGET_TEMPLATE
+                )
+            else:
+                print(f"❌ Error: Unknown TARGET_TEMPLATE '{TARGET_TEMPLATE}'.")
+                
+        # ==========================================
+        # MASS PRODUCTION MODE
+        # ==========================================
         else:
             print(f"\n[PRODUCTION MODE] Fetching hierarchy for State Code '{TARGET_STATE}'...")
             target_parlimen = get_parliaments_for_state(TARGET_STATE)
@@ -72,31 +93,61 @@ if __name__ == "__main__":
             if not target_parlimen:
                 print(f"Error: No locations found for state code '{TARGET_STATE}'.")
             else:
-                print(f"Found {len(target_parlimen)} Parliaments and {len(target_duns)} DUNs.")
+                print(f"Found {len(target_parlimen)} Parliaments and {len(target_duns)} DUNs for State {TARGET_STATE}.")
                 
-                print("\n--- Starting Phase A: Parliament Reports ---")
-                for parl in target_parlimen:
+                # ------------------------------------------------
+                # ROUTE 1: NEGERI REPORT GENERATION
+                # ------------------------------------------------
+                if TARGET_TEMPLATE == "negeri":
+                    print("\n" + "="*40)
+                    print("🏢 ROUTE: NEGERI REPORT ONLY")
+                    print("="*40)
+                    
                     generate_report(
-                        location_code=parl, 
-                        report_type='parlimen', 
+                        location_code=TARGET_STATE, 
+                        report_type='negeri', 
                         excel_app=app,
                         template_key=TARGET_TEMPLATE
                     )
+                    print(f"✅ Negeri Report for State {TARGET_STATE} complete!")
                     
-                print("\n--- Starting Phase B: DUN Reports ---")
-                for dun_info in target_duns:
-                    # Pass both the DUN code and its parent Parliament code
-                    generate_report(
-                        location_code=dun_info['kod_dun'], 
-                        report_type='dun', 
-                        excel_app=app, 
-                        parent_code=dun_info['kod_parlimen'],
-                        template_key=TARGET_TEMPLATE
-                    )
+                # ------------------------------------------------
+                # ROUTE 2: PARLIMEN & DUN REPORT GENERATION
+                # ------------------------------------------------
+                elif TARGET_TEMPLATE == "parlimen_dun":
+                    print("\n" + "="*40)
+                    print("🏛️ ROUTE: PARLIMEN & DUN REPORTS")
+                    print("="*40)
+                    
+                    print("\n--- Starting Phase A: Parliament Reports ---")
+                    for parl in target_parlimen:
+                        generate_report(
+                            location_code=parl, 
+                            report_type='parlimen', 
+                            excel_app=app,
+                            template_key=TARGET_TEMPLATE
+                        )
+                        
+                    print("\n--- Starting Phase B: DUN Reports ---")
+                    for dun_info in target_duns:
+                        # Pass both the DUN code and its parent Parliament code
+                        generate_report(
+                            location_code=dun_info['kod_dun'], 
+                            report_type='dun', 
+                            excel_app=app, 
+                            parent_code=dun_info['kod_parlimen'],
+                            template_key=TARGET_TEMPLATE
+                        )
+                
+                else:
+                    print(f"\n❌ Error: Unknown TARGET_TEMPLATE '{TARGET_TEMPLATE}'.")
                     
     except Exception as e:
         print(f"\nBatch generation interrupted: {e}")
     finally:
         print("\nShutting down Excel engine...")
-        app.quit()
+        try:
+            app.quit()
+        except:
+            pass
         print("Batch Processing Complete!")

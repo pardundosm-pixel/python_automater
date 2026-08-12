@@ -110,7 +110,7 @@ def generate_report(location_code: str, report_type: str, excel_app: xw.App, par
     elif report_type == 'dun':
         hierarchy = get_dun_hierarchy(location_code, parent_code)
     elif report_type == 'negeri':
-        hierarchy = get_negeri_hierarchy(location_code)
+        hierarchy = get_negeri_hierarchy(location_code)  # <--- NEW: FETCH NEGERI DATA
     elif report_type == 'malaysia':
         hierarchy = {'state_name': 'Malaysia', 'location_name': 'Malaysia', 'state_code': '00'}
     else:

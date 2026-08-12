@@ -10,6 +10,7 @@ class Database:
         
         # Assign tables to easily accessible attributes
         self.dim_geo = self.all_sheets.get('dim_geografi')
+        self.dim_daerah = self.all_sheets.get('dim_daerah')
         self.fact_dun = self.all_sheets.get('fact_metrics_dun')
         self.fact_parlimen = self.all_sheets.get('fact_metrics_parlimen')
         self.fact_negeri = self.all_sheets.get('fact_metrics_negeri')

@@ -120,3 +120,45 @@ def get_metrics_dict(location_code: str, level: str, parent_code: str = None):
 
     print(f"[DATA] Retrieved metrics for {len(metrics_by_year)} year(s) for {location_code}")
     return metrics_by_year
+
+def get_negeri_hierarchy(state_code: str):
+    """Fetches State details and its nested Districts from the dim_daerah sheet."""
+    print(f"[DATA] Fetching location hierarchy for state_code: {state_code}")
+    
+    clean_target = str(state_code).zfill(2)
+    
+    # 1. Fetch State Name from dim_geo (Standard practice for consistency)
+    geo = db.dim_geo
+    clean_geo_codes = geo['kod_negeri'].astype(str).str.replace(r'\.0$', '', regex=True).str.zfill(2)
+    geo_subset = geo[clean_geo_codes == clean_target]
+    
+    if geo_subset.empty:
+        print(f"[DATA] No location found for state_code: {state_code} in dim_geografi")
+        return None
+        
+    state_name = geo_subset.iloc[0]['nama_negeri']
+    
+    # 2. Extract Districts safely from the dedicated dim_daerah sheet
+    dim_daerah = db.dim_daerah
+    if dim_daerah is not None and not dim_daerah.empty:
+        
+        # Normalize the state codes in dim_daerah just in case
+        daerah_mask = dim_daerah['kod_negeri'].astype(str).str.replace(r'\.0$', '', regex=True).str.zfill(2) == clean_target
+        daerah_subset = dim_daerah[daerah_mask]
+        
+        # Extract the district codes and names
+        districts_raw = daerah_subset[['kod_daerah', 'nama_daerah']].drop_duplicates().dropna().to_dict('records')
+        
+        # Filter out empty or "n.a." values
+        districts = [{'code': d['kod_daerah'], 'name': d['nama_daerah']} 
+                        for d in districts_raw if str(d['kod_daerah']).lower() not in ['n.a.', 'n.a', 'na']]
+    else:
+        print("[DATA] Warning: 'dim_daerah' sheet not found in the database. Returning empty district list.")
+        districts = []
+    
+    print(f"[DATA] Found {len(districts)} Daerahs for Negeri {state_name}")
+    return {
+        'state_code': clean_target,
+        'state_name': state_name,
+        'districts': districts
+    }
