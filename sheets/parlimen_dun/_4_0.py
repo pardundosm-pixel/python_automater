@@ -6,18 +6,18 @@ from src.data_provider import get_metrics_dict
 # ==========================================
 # 1. Map Excel Row to Metric Name
 ROW_MAP = {
-    11:  "tenaga_buruh",
+    11: "tenaga_buruh",
     15: "penduduk_bekerja",
     19: "penganggur",
     23: "luar_tenaga_buruh",
-    27: "peratus_kadar_penyertaan_tenaga_buruh",
-    31: "peratus_kadar_pengangguran",
+    27: "kadar_penyertaan_tenaga_buruh",
+    31: "kadar_pengangguran",
 
 }
 
 # 2. Map Excel Column to Year
 COL_MAP = {
-    11: "2023",  # E.g., Column D
+    11: "2024",  # E.g., Column D
 }
 
 # ==========================================

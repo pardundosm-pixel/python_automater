@@ -7,23 +7,32 @@ from src.data_provider import get_metrics_dict
 # Map the EXCEL ROW NUMBER to the METRIC NAME in the database
 ROW_MAP = {
     8:  "jumlah_penduduk",
-    9:  "lelaki",
-    10: "perempuan",
-    12: "warganegara",
-    13: "bukan_warganegara",
-    15: "bumiputera",
-    16: "cina",
-    17: "india",
-    18: "lain_lain",
-    20: "umur_0_14",
-    21: "umur_15_64",
-    22: "umur_65_ke_atas"
+    12: "penduduk_warganegara",
+    13: "penduduk_bukan_warganegara",
+    15: "penduduk_lelaki",
+    16: "penduduk_perempuan",
+    19: "peratus_penduduk_warganegara",
+    20: "peratus_penduduk_bukan_warganegara",
+    24: "peratus_penduduk_bumiputera",
+    25: "peratus_penduduk_cina",
+    26: "peratus_penduduk_india",
+    27: "peratus_penduduk_lain_lain",
+    31: "penduduk_umur_0_14",
+    33: "penduduk_umur_15_30",
+    35: "penduduk_umur_15_64",
+    37: "penduduk_umur_65_lebih",
+    39: "penduduk_umur_18_lebih",
+    44: "jumlah_nisbah_tanggungan",
+    45: "umur_muda",
+    46: "umur_tua",
+    48: "nisbah_jantina",
+    51: "kepadatan_penduduk"
 }
 
 # Map the EXCEL COLUMN INDEX to the YEAR STRING
 COL_MAP = {
-    6: "2023",
-    7: "2024",
+    6: "2024",
+    7: "2025",
 }
 
 # ==========================================
@@ -50,8 +59,8 @@ def populate_jadual_2_2(sheet, hierarchy, report_type):
     parl_name = hierarchy.get('parl_name') or hierarchy.get('parent_parl_name')
     
     # Because this is Jadual 2.2, the title ALWAYS says "Parlimen", even in a DUN report
-    title_bm = f": Keluasan dan penduduk bagi Parlimen {parl_name}, {hierarchy.get('state_name')}, 2022 - 2024"
-    title_en = f": Area and population for Parliament {parl_name}, {hierarchy.get('state_name')}, 2022 - 2024"
+    title_bm = f": Anggaran penduduk pertengahan tahun, Parlimen {parl_name}, {hierarchy.get('state_name')}, 2024 - 2025"
+    title_en = f": Mid-year population estimates, Parliament of {parl_name}, {hierarchy.get('state_name')}, 2024 - 2025"
 
     sheet.range("C3").value = title_bm
     sheet.range("C4").value = title_en

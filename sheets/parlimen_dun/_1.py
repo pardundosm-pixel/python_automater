@@ -22,10 +22,10 @@ ROW_MAP = {
     16: ("kepadatan_penduduk", "2023"),
     17: ("kepadatan_penduduk", "2024"),
     18: ("kepadatan_penduduk", "2025"),
-    20: ("pru_jumlah_pemilih", "PRU 14"), 
-    21: ("pru_jumlah_pemilih", "PRU 15"), 
-    23: ("pru_jumlah_undian_oleh_pemilih", "PRU 14"), 
-    24: ("pru_jumlah_undian_oleh_pemilih", "PRU 15"),
+    20: ("jumlah_pemilih", "PRU 14"), 
+    21: ("jumlah_pemilih", "PRU 15"), 
+    23: ("jumlah_undian_oleh_pemilih", "PRU 14"), 
+    24: ("jumlah_undian_oleh_pemilih", "PRU 15"),
     26: ("jumlah_kertas_undi_yang_ditolak", "PRU 14"), #variable 
     27: ("jumlah_kertas_undi_yang_ditolak", "PRU 15"), #variable baru
     29: ("bilangan_kertas_undi_yang_dikeluarkan_tetapi_tidak_dimasukkan_ke_dalam_peti_undi_dan_tidak_dikembalikan", "PRU 14"), #variable baru
@@ -125,15 +125,15 @@ def populate_jadual_1(sheet, hierarchy, report_type):
     # 1. Determine the correct location string based on the report type
     if report_type == 'parlimen':
         loc_string_bm = f"Parlimen {hierarchy.get('parl_name')}"
-        loc_string_en = f"Parlimen {hierarchy.get('parl_name')}"
+        loc_string_en = f"Parliament {hierarchy.get('parl_name')}"
     else:
         loc_string_bm = f"DUN {hierarchy.get('dun_name')}"
         loc_string_en = f"DUN {hierarchy.get('dun_name')}"
 
     # 2. Format the specific titles for this Jadual
     # Update the base text here to match Jadual 1.0 (Maklumat Asas)
-    title_bm = f": Maklumat asas bagi {loc_string_bm}, {hierarchy.get('state_name')}, 2023 - 2025"
-    title_en = f": Basic information for {loc_string_en}, {hierarchy.get('state_name')}, 2023 - 2025"
+    title_bm = f": Statistik maklumat asas, {loc_string_bm}, {hierarchy.get('state_name')}, 2023 - 2025"
+    title_en = f": Statistics of basic information, {loc_string_en}, {hierarchy.get('state_name')}, 2023 - 2025"
 
     # 3. Inject into the sheet (Choose ONE method and comment out the other)
     # Method A: Fixed cell coordinates
