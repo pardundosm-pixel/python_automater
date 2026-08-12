@@ -56,36 +56,54 @@ def get_metrics_dict(location_code: str, level: str, parent_code: str = None):
     Fetches metrics for a location and formats them into a nested dictionary by year.
     If level is 'dun', parent_code (kod_parlimen) MUST be provided to prevent state collisions.
     """
+    def _norm(series):
+        # Normalize to string regardless of whether the source column was
+        # loaded as str, int, or float (e.g. 1 / 1.0 / "01").
+        s = series.astype(str).str.strip()
+        return s.str.replace(r'\.0$', '', regex=True)
+
+    def _norm_negeri_code(value):
+        # State codes are always 2-digit, zero-padded ("01".."16").
+        v = str(value).strip()
+        if v.endswith('.0'):
+            v = v[:-2]
+        return v.zfill(2)
+
+    location_code_norm = str(location_code).strip()
+    if location_code_norm.endswith('.0'):
+        location_code_norm = location_code_norm[:-2]
+
     if level == 'parlimen':
         df = db.fact_parlimen
-        mask = df['kod_parlimen'] == location_code
-        
+        mask = _norm(df['kod_parlimen']) == location_code_norm
+
     elif level == 'dun':
         df = db.fact_dun
-        mask = df['kod_dun'] == location_code
+        mask = _norm(df['kod_dun']) == location_code_norm
         if parent_code:
-            mask = mask & (df['kod_parlimen'] == parent_code)
-            
+            mask = mask & (_norm(df['kod_parlimen']) == str(parent_code).strip())
+
     elif level == 'negeri':
         df = db.fact_negeri
-        mask = df['kod_negeri'] == location_code
-        
+        target = _norm_negeri_code(location_code)
+        mask = df['kod_negeri'].apply(_norm_negeri_code) == target
+
     elif level == 'malaysia':
         df = db.fact_malaysia
-        mask = df['lokasi'] == location_code
+        mask = _norm(df['lokasi']) == location_code_norm
     else:
         return {}
-        
+
     subset = df[mask]
     if subset.empty:
         return {}
-        
+
     metrics_by_year = {}
     for tahun, group in subset.groupby('tahun'):
         tahun_str = str(tahun).strip() if pd.notnull(tahun) else 'unknown'
         if tahun_str.endswith(".0"):
             tahun_str = tahun_str[:-2]
-        
+
         metrics_by_year[tahun_str] = dict(zip(group['kategori_metrik'], group['nilai']))
-        
+
     return metrics_by_year
