@@ -7,30 +7,36 @@ from src.data_provider import get_metrics_dict
 # Map the EXCEL ROW NUMBER to the METRIC NAME in the database
 ROW_MAP = {
     # KDNK pada harga malar 2015 (RM juta)
-    8:  "kdnk_harga_malar_nilai",      # Total KDNK
-    9:  "pertanian_nilai",
-    10: "perlombongan_pengkuarian_nilai",
-    11: "pembuatan_nilai",
-    12: "pembinaan_nilai",
-    13: "perkhidmatan_nilai",
-    14: "duti_import_nilai",
+    8:  "kdnk_harga_malar",      # Total KDNK
+    9:  "kdnk_pertanian",
+    10: "kdnk_perlombongan",
+    11: "kdnk_pembuatan",
+    12: "kdnk_pembinaan",
+    13: "kdnk_perkhidmatan",
+    14: "kdnk_tambah_duti_import",
     
     # Perubahan peratusan tahunan (%)
-    17: "kdnk_harga_malar_peratus",    # Total KDNK Growth
-    18: "pertanian_peratus",
-    19: "perlombongan_pengkuarian_peratus",
-    20: "pembuatan_peratus",           # Deduced based on standard pattern
-    21: "pembinaan_peratus",           # Deduced based on standard pattern
-    22: "perkhidmatan_peratus",        # Deduced based on standard pattern
-    23: "duti_import_peratus"          # Deduced based on standard pattern
+    17: "peratusan_tahunan",    # Total KDNK Growth
+    18: "peratusan_tahunan_pertanian",
+    19: "peratusan_tahunan_perlombongan",
+    20: "peratusan_tahunan_pembuatan",           # Deduced based on standard pattern
+    21: "peratusan_tahunan_pembinaan",           # Deduced based on standard pattern
+    22: "peratusan_tahunan_perkhidmatan",        # Deduced based on standard pattern
+    23: "peratusan_tahunan_tambah_duti_import",          # Deduced based on standard pattern
+
+    # KDNK pada harga semasa (RM juta)
+    26: "kdnk_harga_semasa",
+
+    # KDNK per kapita pada harga semasa (RM)
+    29: "kdnk_per_kapita_harga_semasa"
 }
 
 # Map the EXCEL COLUMN NUMBER to the YEAR STRING
 # Based on screenshot: Column J = 10, Column K = 11, Column L = 12
 COL_MAP = {
-    10: "2022",  
-    11: "2023",  
-    12: "2024"   
+    10: "2023",  
+    11: "2024",  
+    12: "2025"   
 }
 
 # ==========================================
@@ -51,8 +57,8 @@ def populate_jadual_42(sheet, hierarchy, report_type):
     # ==========================================
     # DYNAMIC TABLE TITLE MODIFICATION
     # ==========================================
-    title_bm = f": Keluaran Dalam Negeri Kasar (KDNK), {state_name}, 2022 - 2024"
-    title_en = f": Gross Domestic Product (GDP), {state_name}, 2022 - 2024"
+    title_bm = f": Keluaran Dalam Negeri Kasar (KDNK), {state_name}, 2023 - 2025p"
+    title_en = f": Gross Domestic Product (GDP), {state_name}, 2023 - 2025p"
 
     # Set the exact cells where your title sits in the template
     sheet.range("C3").value = title_bm

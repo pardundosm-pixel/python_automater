@@ -35,14 +35,19 @@ from sheets.parlimen_dun._13_1 import populate_jadual_13_1 as jadual_13_1
 from sheets.parlimen_dun._13_2 import populate_jadual_13_2 as jadual_13_2
 
 # (Malaysia Template Mappers)
-from sheets.malaysia._14_0 import populate_jadual_14 as jadual_14_malaysia
+from sheets.malaysia._14_0 import populate_jadual_14_0 as jadual_14_0_malaysia
 from sheets.malaysia._14_1 import populate_jadual_14_1 as jadual_14_1_malaysia
-from sheets.malaysia._20_0 import populate_jadual_20 as jadual_20_malaysia
-from sheets.malaysia._31_0 import populate_jadual_31 as jadual_31_malaysia
+from sheets.malaysia._14_2 import populate_jadual_14_2 as jadual_14_2_malaysia
+from sheets.malaysia._15_0 import populate_jadual_15_0 as jadual_15_0_malaysia
+from sheets.malaysia._16_0 import populate_jadual_16_0 as jadual_16_0_malaysia
+from sheets.malaysia._17_0 import populate_jadual_17_0 as jadual_17_0_malaysia
+from sheets.malaysia._18_0 import populate_jadual_18_0 as jadual_18_0_malaysia
+from sheets.malaysia._19_0 import populate_jadual_19_0 as jadual_19_0_malaysia
 
 # (Negeri Template Mappers)
 from sheets.negeri._42_1 import populate_jadual_42_1 as jadual_42_1_negeri
-
+from sheets.negeri._42_0 import populate_jadual_42 as jadual_42_negeri
+from sheets.negeri._43_0 import populate_jadual_43 as jadual_43_negeri
 
 # ==========================================
 # 2. BUILD THE NESTED ROUTING REGISTRY
@@ -80,15 +85,25 @@ MASTER_REGISTRY = {
     
     # Profile 2: Malaysia
     "malaysia": {
-        # "14.0_KDNK": jadual_14_malaysia, 
+        "14.0_KDNK": jadual_14_0_malaysia,
+        "14.0_KDNK_1": jadual_14_1_malaysia,
+        "14.0_KDNK_2": jadual_14_2_malaysia,
+        "15.0_Pasaran_Kewagn": jadual_15_0_malaysia,
+        "16.0_Akaun_ SP": jadual_16_0_malaysia,
+        "17.0_Akaun_ STMK": jadual_17_0_malaysia,
+        "18.0_Stok_Modal": jadual_18_0_malaysia,
+        "19.0_Imbagn_Pembayaran": jadual_19_0_malaysia,
         # "14.0_KDNK_1": jadual_14_1_malaysia
         # "20.0": jadual_20_malaysia,
-        # "31.0": jadual_31_malaysia
+        # "31.0": jadual_31_malaysia,
     },
     
     # Profile 3: Negeri
     "negeri": {
-        "42.1_KDNK": jadual_42_1_negeri
+        "42.1_KDNK": jadual_42_1_negeri,
+        "42.0_KDNK": jadual_42_negeri,
+        "43.0_Dagangan": jadual_43_negeri
+        # Future Negeri Mappers will go here
     }
 }
 
@@ -106,7 +121,7 @@ def generate_report(location_code: str, report_type: str, excel_app: xw.App, par
     elif report_type == 'dun':
         hierarchy = get_dun_hierarchy(location_code, parent_code)
     elif report_type == 'negeri':
-        hierarchy = get_negeri_hierarchy(location_code)
+        hierarchy = get_negeri_hierarchy(location_code)  # <--- NEW: FETCH NEGERI DATA
     elif report_type == 'malaysia':
         hierarchy = {'state_name': 'Malaysia', 'location_name': 'Malaysia', 'state_code': '00'}
     else:

@@ -38,50 +38,71 @@ def get_duns_for_state(state_code: str):
 # THE ISOLATED WORKER FUNCTION
 # ==========================================
 def process_single_state(state_code, template_key):
-    """Runs entirely in its own parallel background process."""
-    target_parlimen = get_parliaments_for_state(state_code)
-    target_duns = get_duns_for_state(state_code)
-    
-    if not target_parlimen:
-        return f"[State {state_code}] Skipped: No locations found."
-
-    # Spin up a DEDICATED Excel App for this specific worker
+    """
+    Worker function: Opens an isolated Excel instance, processes the requested 
+    template profile for the given state, and shuts down.
+    """
     app = xw.App(visible=False)
     app.screen_updating = False
     app.display_alerts = False
     
-    success_count = 0
-    
     try:
-        # Generate Parliament Reports
-        for parl in target_parlimen:
+        success_count = 0
+        
+        # ------------------------------------------------
+        # ROUTE 1: NEGERI REPORT (1 State = 1 Report)
+        # ------------------------------------------------
+        if template_key == "negeri":
             generate_report(
-                location_code=parl, 
-                report_type='parlimen', 
+                location_code=state_code, 
+                report_type='negeri', 
                 excel_app=app,
                 template_key=template_key
             )
-            success_count += 1
+            return f"✅ [State {state_code}] Successfully generated 1 Negeri Report."
             
-        # Generate DUN Reports
-        for dun_info in target_duns:
-            generate_report(
-                location_code=dun_info['kod_dun'], 
-                report_type='dun', 
-                excel_app=app, 
-                parent_code=dun_info['kod_parlimen'],
-                template_key=template_key
-            )
-            success_count += 1
+        # ------------------------------------------------
+        # ROUTE 2: PARLIMEN & DUN REPORTS (1 State = Many Reports)
+        # ------------------------------------------------
+        elif template_key == "parlimen_dun":
+            target_parlimen = get_parliaments_for_state(state_code)
+            target_duns = get_duns_for_state(state_code)
             
-        return f"✅ [State {state_code}] Successfully generated {success_count} reports."
-        
+            # Generate all Parliament Reports for this state
+            for parl in target_parlimen:
+                generate_report(
+                    location_code=parl, 
+                    report_type='parlimen', 
+                    excel_app=app,
+                    template_key=template_key
+                )
+                success_count += 1
+                
+            # Generate all DUN Reports for this state
+            for dun_info in target_duns:
+                generate_report(
+                    location_code=dun_info['kod_dun'], 
+                    report_type='dun', 
+                    excel_app=app, 
+                    parent_code=dun_info['kod_parlimen'],
+                    template_key=template_key
+                )
+                success_count += 1
+                
+            return f"✅ [State {state_code}] Successfully generated {success_count} Parlimen & DUN reports."
+            
+        else:
+            return f"❌ [State {state_code}] FAILED: Unknown template key '{template_key}'"
+            
     except Exception as e:
         return f"❌ [State {state_code}] FAILED with error: {e}"
         
     finally:
         # GUARANTEE the hidden Excel app is killed
-        app.quit()
+        try:
+            app.quit()
+        except:
+            pass
 
 
 # ==========================================
