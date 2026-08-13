@@ -31,34 +31,6 @@ def get_location_hierarchy(parlimen_code: str):
         'duns': duns
     }
 
-def get_dun_hierarchy(dun_code: str, parent_parl_code: str = None):
-    """Fetches DUN details and its parent Parliament safely using strict matching."""
-    print(f"[DATA] Fetching DUN hierarchy for dun_code: {dun_code}, parent_parl_code: {parent_parl_code}")
-    geo = db.dim_geo
-    
-    mask = geo['kod_dun'] == dun_code
-    
-    # Strictly lock the query to the parent parliament if provided
-    if parent_parl_code:
-        mask = mask & (geo['kod_parlimen'] == parent_parl_code)
-        
-    subset = geo[mask]
-    
-    if subset.empty:
-        print(f"[DATA] No DUN found for dun_code: {dun_code} with parent {parent_parl_code}")
-        return None
-    
-    result = {
-        'dun_code': dun_code,
-        'dun_name': subset.iloc[0]['nama_dun'],
-        'state_code': subset.iloc[0]['kod_negeri'],
-        'state_name': subset.iloc[0]['nama_negeri'],
-        'parent_parl_code': subset.iloc[0]['kod_parlimen'],
-        'parent_parl_name': subset.iloc[0]['nama_parlimen']
-    }
-    print(f"[DATA] Found DUN: {result['dun_name']} under {result['parent_parl_name']}")
-    return result
-
 def get_metrics_dict(location_code: str, level: str, parent_code: str = None):
     """
     Fetches metrics for a location and formats them into a nested dictionary by year.
@@ -126,6 +98,33 @@ def get_metrics_dict(location_code: str, level: str, parent_code: str = None):
     elif level == 'malaysia':
         df = db.fact_malaysia
         mask = _norm(df['lokasi']) == location_code_norm
+
+    elif level == 'pdrm':
+        df = db.fact_pdrm
+        # Use _norm_daerah_code to guarantee "1" becomes "01"
+        target = _norm_daerah_code(location_code)
+        mask = df['kod_daerah_pdrm'].apply(_norm_daerah_code) == target
+            
+    elif level == 'jkm':
+        df = db.fact_jkm
+        
+        # --- NEW: Handle State Total inside fact_jkm (empty kod_cawangan_jkm) ---
+        if location_code == "STATE_TOTAL":
+            # Catch all pandas variations of an empty/null cell
+            mask = df['kod_cawangan_jkm'].isna() | \
+                (df['kod_cawangan_jkm'].astype(str).str.strip() == '') | \
+                (df['kod_cawangan_jkm'].astype(str).str.lower() == 'nan') | \
+                (df['kod_cawangan_jkm'].astype(str).str.lower() == 'n.a.')
+        else:
+            # Use _norm_daerah_code to guarantee "2" becomes "02"
+            target = _norm_daerah_code(location_code)
+            mask = df['kod_cawangan_jkm'].apply(_norm_daerah_code) == target
+            
+        # Add safety lock for State Code to prevent collisions
+        if parent_code:
+            parent_target = _norm_negeri_code(parent_code)
+            mask = mask & (df['kod_negeri'].apply(_norm_negeri_code) == parent_target)
+    
     else:
         print(f"[DATA] Unknown level '{level}' - returning empty")
         return {}
@@ -145,6 +144,34 @@ def get_metrics_dict(location_code: str, level: str, parent_code: str = None):
 
     print(f"[DATA] Retrieved metrics for {len(metrics_by_year)} year(s) for {location_code}")
     return metrics_by_year
+
+def get_dun_hierarchy(dun_code: str, parent_parl_code: str = None):
+    """Fetches DUN details and its parent Parliament safely using strict matching."""
+    print(f"[DATA] Fetching DUN hierarchy for dun_code: {dun_code}, parent_parl_code: {parent_parl_code}")
+    geo = db.dim_geo
+    
+    mask = geo['kod_dun'] == dun_code
+    
+    # Strictly lock the query to the parent parliament if provided
+    if parent_parl_code:
+        mask = mask & (geo['kod_parlimen'] == parent_parl_code)
+        
+    subset = geo[mask]
+    
+    if subset.empty:
+        print(f"[DATA] No DUN found for dun_code: {dun_code} with parent {parent_parl_code}")
+        return None
+    
+    result = {
+        'dun_code': dun_code,
+        'dun_name': subset.iloc[0]['nama_dun'],
+        'state_code': subset.iloc[0]['kod_negeri'],
+        'state_name': subset.iloc[0]['nama_negeri'],
+        'parent_parl_code': subset.iloc[0]['kod_parlimen'],
+        'parent_parl_name': subset.iloc[0]['nama_parlimen']
+    }
+    print(f"[DATA] Found DUN: {result['dun_name']} under {result['parent_parl_name']}")
+    return result
 
 def get_negeri_hierarchy(state_code: str):
     """Fetches State details and its nested Districts from the dim_daerah sheet."""
@@ -187,3 +214,48 @@ def get_negeri_hierarchy(state_code: str):
         'state_name': state_name,
         'districts': districts
     }
+
+def get_pdrm_hierarchy(state_code: str):
+    """Fetches unique Police Districts (Daerah PDRM) for a given state from the isolated dim_daerah_pdrm table."""
+    print(f"[DATA] Fetching PDRM hierarchy for state_code: {state_code}")
+    dim_pdrm = db.dim_pdrm
+    
+    if dim_pdrm is None or dim_pdrm.empty:
+        print("[DATA] Warning: 'dim_daerah_pdrm' sheet not found.")
+        return []
+        
+    clean_target = str(state_code).zfill(2)
+    pdrm_mask = dim_pdrm['kod_negeri'].astype(str).str.replace(r'\.0$', '', regex=True).str.zfill(2) == clean_target
+    pdrm_subset = dim_pdrm[pdrm_mask]
+    
+    # Extract unique PDRM districts
+    pdrm_raw = pdrm_subset[['kod_daerah_pdrm', 'nama_daerah_pdrm']].drop_duplicates().dropna().to_dict('records')
+    
+    pdrm_districts = [{'code': d['kod_daerah_pdrm'], 'name': d['nama_daerah_pdrm']} 
+                        for d in pdrm_raw if str(d['kod_daerah_pdrm']).lower() not in ['n.a.', 'n.a', 'na']]
+
+    print(f"[DATA] Found {len(pdrm_districts)} PDRM Districts.")
+    return pdrm_districts
+
+
+def get_jkm_hierarchy(state_code: str):
+    """Fetches unique Social Welfare Branches (Cawangan JKM) for a given state from the isolated dim_cawangan_jkm table."""
+    print(f"[DATA] Fetching JKM hierarchy for state_code: {state_code}")
+    dim_jkm = db.dim_jkm
+    
+    if dim_jkm is None or dim_jkm.empty:
+        print("[DATA] Warning: 'dim_cawangan_jkm' sheet not found.")
+        return []
+        
+    clean_target = str(state_code).zfill(2)
+    jkm_mask = dim_jkm['kod_negeri'].astype(str).str.replace(r'\.0$', '', regex=True).str.zfill(2) == clean_target
+    jkm_subset = dim_jkm[jkm_mask]
+    
+    # Extract unique JKM branches
+    jkm_raw = jkm_subset[['kod_cawangan_jkm', 'cawangan_jkm']].drop_duplicates().dropna().to_dict('records')
+    
+    jkm_branches = [{'code': d['kod_cawangan_jkm'], 'name': d['cawangan_jkm']} 
+                    for d in jkm_raw if str(d['kod_cawangan_jkm']).lower() not in ['n.a.', 'n.a', 'na']]
+                    
+    print(f"[DATA] Found {len(jkm_branches)} JKM Branches.")
+    return jkm_branches
