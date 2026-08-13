@@ -135,8 +135,8 @@ def populate_jadual_2_3(sheet, hierarchy, report_type):
     # TODO: Inject into the sheet (Choose ONE method and comment out the other)
     
     # Method A: Fixed cell coordinates (if the title never moves rows)
-    # sheet.range("C3").value = title_bm
-    # sheet.range("C4").value = title_en
+    sheet.range("C3").value = title_bm
+    sheet.range("C4").value = title_en
     
     # Method B: Dynamic coordinates based on Target Row (if the title shifts with the table)
     # sheet.range((target_row - 2, 3)).value = title_bm  # Assuming Column C is Index 3

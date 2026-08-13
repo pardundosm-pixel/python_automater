@@ -44,8 +44,8 @@ def populate_jadual_4(sheet, hierarchy, report_type):
     parl_name = hierarchy.get('parl_name') or hierarchy.get('parent_parl_name')
     
     # Because this is Jadual 2.2, the title ALWAYS says "Parlimen", even in a DUN report
-    title_bm = f": Anggaran penduduk pertengahan tahun, {parl_name}, {hierarchy.get('state_name')}, 2022 - 2024"
-    title_en = f": Mid-year population estimates, Parliament {parl_name}, {hierarchy.get('state_name')}, 2022 - 2024"
+    title_bm = f": Statistik guna tenaga, Parlimen {parl_name}, {hierarchy.get('state_name')}, 2024"
+    title_en = f": Statistics of employment, Parliament {parl_name}, {hierarchy.get('state_name')}, 2024"
 
     sheet.range("C3").value = title_bm
     sheet.range("C4").value = title_en

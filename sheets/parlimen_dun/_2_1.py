@@ -47,10 +47,10 @@ def populate_jadual_2_1(sheet, hierarchy, report_type):
     print(f"  -> Populating Jadual 2.1 (Negeri) for {hierarchy['state_name']}")
 
     # 1. Fetch the Data Payload strictly for Malaysia
-    metrics_data = get_metrics_dict("Malaysia", level='malaysia')
+    metrics_data = get_metrics_dict("Malaysia", level='negeri')
     
     if not metrics_data:
-        print(f"     [Warning] No data found for Malaysia.")
+        print(f"     [Warning] No data found for Negeri.")
         return
 
     # ==========================================
