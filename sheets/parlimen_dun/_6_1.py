@@ -11,16 +11,16 @@ HEADER_ANCHOR = "PENDIDIKAN SWASTA" # e.g., "MAKLUMAT ASAS" or "KEMISKINAN"
 # TODO: Map the EXCEL ROW NUMBER to a TUPLE of ("METRIC_NAME", "YEAR")
 # Format: { Excel_Row: ("metric_name_in_database", "Year") }
 ROW_MAP = {
-    10:  ("bilangan_sekolah", "2024"),
-    11:  ("bilangan_sekolah", "2025"),
+    10:  ("bilangan_sekolah", "2024"), #sum
+    11:  ("bilangan_sekolah", "2025"), #sum
     13:  ("sekolah_rendah", "2024"),
     14:  ("sekolah_rendah", "2025"),
     16:  ("sekolah_rendah_akademik", "2024"),
     17:  ("sekolah_rendah_akademik", "2025"),
     19:  ("sekolah_rendah_agama", "2024"),
     20:  ("sekolah_rendah_agama", "2025"),
-    22:  ("sekolah_menengah", "2024"),
-    23:  ("sekolah_menengah", "2025"),
+    22:  ("sekolah_menengah", "2024"), #sum
+    23:  ("sekolah_menengah", "2025"), #sum
     25:  ("sekolah_menengah_akademik", "2024"),
     26:  ("sekolah_menengah_akademik", "2025"),
     28:  ("sekolah_menengah_agama", "2024"),
@@ -33,8 +33,8 @@ ROW_MAP = {
     38:  ("sekolah_antarabangsa", "2025"),
     40:  ("sekolah_ekspatriat", "2024"),
     41:  ("sekolah_ekspatriat", "2025"),
-    43:  ("bilangan_guru", "2024"),
-    44:  ("bilangan_guru", "2025"),
+    43:  ("bilangan_guru", "2024"), #sum
+    44:  ("bilangan_guru", "2025"), #sum
     46:  ("bilangan_guru_sekolah_rendah", "2024"),
     47:  ("bilangan_guru_sekolah_rendah", "2025"),
     49:  ("guru_sekolah_rendah_akademik", "2024"),
@@ -55,8 +55,8 @@ ROW_MAP = {
     71:  ("guru_antarabangsa", "2025"),
     73:  ("guru_ekspatriat", "2024"),
     74:  ("guru_ekspatriat", "2025"),
-    91:  ("bilangan_murid", "2024"),
-    92:  ("bilangan_murid", "2025"),
+    91:  ("bilangan_murid", "2024"), #sum
+    92:  ("bilangan_murid", "2025"), #sum
     94:  ("bilangan_murid_sekolah_rendah", "2024"),
     95:  ("bilangan_murid_sekolah_rendah", "2025"),
     97:  ("murid_sekolah_rendah_akademik", "2024"),
