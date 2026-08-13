@@ -11,17 +11,17 @@ HEADER_ANCHOR = "KESIHATAN" # e.g., "MAKLUMAT ASAS" or "KEMISKINAN"
 # TODO: Map the EXCEL ROW NUMBER to a TUPLE of ("METRIC_NAME", "YEAR")
 # Format: { Excel_Row: ("metric_name_in_database", "Year") }
 ROW_MAP = {
-    11: ("hospital_kerajaan", "2024"),
+    11: ("hospital_kkm", "2024"),
     14: ("hospital_swasta", "2024"),
-    20: ("klinik_kesihatan", "2024"),
+    20: ("klinik_kesihatan_kerajaan", "2024"),
     23: ("klinik_desa", "2024"),
     26: ("klinik_komuniti", "2024"),
-    29: ("katil_hospital_kerajaan", "2024"),
-    32: ("katil_hospital_swasta", "2024"),
+    29: ("bilangan_katil_kerajaan", "2024"),
+    32: ("bilangan_katil_swasta", "2024"),
 }
 
 # TODO: Set the furthest row down that contains dummy template data for cleanup
-MAX_ROW_TO_CLEAN = 50 # Adjust based on how far down the template's dummy data goes
+MAX_ROW_TO_CLEAN = 34 # Adjust based on how far down the template's dummy data goes
 
 # ==========================================
 # 2. DYNAMIC BOUNDARY SCANNER (Universal)
