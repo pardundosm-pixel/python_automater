@@ -101,9 +101,21 @@ def get_metrics_dict(location_code: str, level: str, parent_code: str = None):
 
     elif level == 'pdrm':
         df = db.fact_pdrm
-        # Use _norm_daerah_code to guarantee "1" becomes "01"
         target = _norm_daerah_code(location_code)
-        mask = df['kod_daerah_pdrm'].apply(_norm_daerah_code) == target
+        
+        # Safely handle column naming variations in the database
+        if 'kod_daerah_pdrm' in df.columns:
+            mask = df['kod_daerah_pdrm'].apply(_norm_daerah_code) == target
+        elif 'kod_daerah' in df.columns:
+            mask = df['kod_daerah'].apply(_norm_daerah_code) == target
+        else:
+            print("[DATA] Error: Could not find PDRM district code column in fact_pdrm")
+            return {}
+            
+        # Add safety lock for State Code to prevent collisions
+        if parent_code:
+            parent_target = _norm_negeri_code(parent_code)
+            mask = mask & (df['kod_negeri'].apply(_norm_negeri_code) == parent_target)
             
     elif level == 'jkm':
         df = db.fact_jkm
@@ -229,9 +241,9 @@ def get_pdrm_hierarchy(state_code: str):
     pdrm_subset = dim_pdrm[pdrm_mask]
     
     # Extract unique PDRM districts
-    pdrm_raw = pdrm_subset[['kod_daerah_pdrm', 'nama_daerah_pdrm']].drop_duplicates().dropna().to_dict('records')
+    pdrm_raw = pdrm_subset[['kod_daerah_pdrm', 'daerah_pdrm']].drop_duplicates().dropna().to_dict('records')
     
-    pdrm_districts = [{'code': d['kod_daerah_pdrm'], 'name': d['nama_daerah_pdrm']} 
+    pdrm_districts = [{'code': d['kod_daerah_pdrm'], 'name': d['daerah_pdrm']} 
                         for d in pdrm_raw if str(d['kod_daerah_pdrm']).lower() not in ['n.a.', 'n.a', 'na']]
 
     print(f"[DATA] Found {len(pdrm_districts)} PDRM Districts.")
