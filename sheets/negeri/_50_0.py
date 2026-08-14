@@ -61,7 +61,7 @@ def sanitize_value(val):
 # 2. REPORT INJECTION ENGINE
 # ==========================================
 # TODO: Rename this function to match your engine.py registry (e.g., populate_jadual_50_0)
-def populate_jadual_50(sheet, hierarchy, report_type):
+def populate_jadual_50_0(sheet, hierarchy, report_type):
     state_name = hierarchy.get('state_name', 'Unknown State')
     state_code = hierarchy.get('state_code', '00')
     print(f"  -> Populating Jadual 50.0 (Jenayah PDRM) untuk {state_name}")

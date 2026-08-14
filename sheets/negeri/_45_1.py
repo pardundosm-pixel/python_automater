@@ -63,7 +63,7 @@ def populate_jadual_45_1(sheet, hierarchy, report_type):
 
     # 2. State-Level Data Injection
     sheet.range((STATE_START_ROW, COL_DISTRICT)).value = state_name.upper()
-    state_metrics = get_metrics_dict("STATE_TOTAL", level='daerah', parent_code=state_code)
+    state_metrics = get_metrics_dict(state_code, level='negeri')
 
     for offset, year in YEAR_OFFSETS.items():
         target_row = STATE_START_ROW + offset
