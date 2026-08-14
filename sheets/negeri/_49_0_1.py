@@ -24,12 +24,12 @@ STATE_START_ROW = 11
 # - The range (e.g., 20) is the maximum number of branches that can fit on that page.
 BLOCK_START_ROWS = (
     [13 + (i * 2) for i in range(20)] + # Page 1: 20 slots starting at Row 13
-    [69 + (i * 2) for i in range(20)]   # Page 2: 20 slots starting at Row 69
+    [68 + (i * 2) for i in range(20)]   # Page 2: 20 slots starting at Row 69
 )
 
 # TODO: Update these cell coordinates if the bilingual titles are placed differently.
 TITLE_COORDINATES = [
-    {"bm": "C2", "en": "C3", "is_samb": False},     # Page 1 Titles
+    {"bm": "C2", "en": "C3", "is_samb": True},     # Page 1 Titles
     {"bm": "C63", "en": "C64", "is_samb": True}     # Page 2 Titles
 ]
 
@@ -56,7 +56,7 @@ def sanitize_value(val):
 # 2. REPORT INJECTION ENGINE
 # ==========================================
 # TODO: Rename this function to match your new Jadual (e.g., populate_jadual_50)
-def populate_jadual_49(sheet, hierarchy, report_type):
+def populate_jadual_49_0_1(sheet, hierarchy, report_type):
     state_name = hierarchy.get('state_name', 'Unknown State')
     state_code = hierarchy.get('state_code', '00')
     
@@ -66,8 +66,8 @@ def populate_jadual_49(sheet, hierarchy, report_type):
 
     # 1. Title Generation
     # TODO: Update the base title text to reflect the metrics of the new Jadual
-    title_bm_base = f": Statistik taman asuhan kanak-kanak mengikut cawangan JKM, {state_name}, 2022 - 2024"
-    title_en_base = f": Statistics of kindergarten by JKM branch, {state_name}, 2022 - 2024"
+    title_bm_base = f": Statistik taman asuhan kanak-kanak mengikut cawangan JKM, {state_name}, 2022 - 2024 (samb.)"
+    title_en_base = f": Statistics of kindergarten by JKM branch, {state_name}, 2022 - 2024 (cont'd)"
     
     for coords in TITLE_COORDINATES:
         suffix_bm = " (samb.)" if coords["is_samb"] else ""
@@ -122,4 +122,4 @@ def populate_jadual_49(sheet, hierarchy, report_type):
         print("     [FORMAT] State only needs 1 page. Eliminating Page 2.")
         # TODO: Adjust the `.delete()` row range (e.g., '58:300') to precisely target 
         # where Page 1's footer ends and Page 2 begins in the new template.
-        sheet.range('58:300').delete()
+        sheet.range('62:300').delete()

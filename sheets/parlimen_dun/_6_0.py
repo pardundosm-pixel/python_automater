@@ -2,6 +2,24 @@ import pandas as pd
 import re
 from src.data_provider import get_metrics_dict
 
+def safe_add(val1, val2):
+    """Safely adds two values, ignoring 'n.a' strings. Returns 'n.a' if both are missing."""
+    def parse_val(v):
+        if pd.isna(v) or str(v).strip().lower() in ['', 'n.a', 'n.a.', 'nan']:
+            return None
+        try:
+            return float(v)
+        except ValueError:
+            return None
+
+    num1 = parse_val(val1)
+    num2 = parse_val(val2)
+
+    if num1 is None and num2 is None:
+        return "n.a"
+    
+    return (num1 or 0.0) + (num2 or 0.0)
+
 # ==========================================
 # 1. MAPPING CONFIGURATION 
 # ==========================================
@@ -29,14 +47,14 @@ ROW_MAP = {
     31: ('bilangan_murid_rendah', '2025'),
     33: ('bilangan_murid_menengah', '2024'),
     34: ('bilangan_murid_menengah', '2025'),
-    36: ('sekolah_1sesi', '2024'), #tiada dalam database
-    37: ('sekolah_1sesi', '2025'), #tiada dalam database
+    36: ('sekolah_1sesi', '2024'), # sum sekolah_rendah_1sesi + sekolah_menengah_1sesi
+    37: ('sekolah_1sesi', '2025'), # sum sekolah_rendah_1sesi + sekolah_menengah_1sesi
     39: ('sekolah_rendah_1sesi', '2024'),
     40: ('sekolah_rendah_1sesi', '2025'),
     42: ('sekolah_menengah_1sesi', '2024'),
     43: ('sekolah_menengah_1sesi', '2025'),
-    45: ('sekolah_2sesi', '2024'), #tiada dalam database
-    46: ('sekolah_2sesi', '2025'), #tiada dalam database
+    45: ('sekolah_2sesi', '2024'), # sum sekolah_rendah_2sesi + sekolah_menengah_2sesi
+    46: ('sekolah_2sesi', '2025'), # sum sekolah_rendah_2sesi + sekolah_menengah_2sesi
     48: ('sekolah_rendah_2sesi', '2024'),
     49: ('sekolah_rendah_2sesi', '2025'),
     51: ('sekolah_menengah_2sesi', '2024'),
@@ -182,6 +200,21 @@ def populate_jadual_6(sheet, hierarchy, report_type):
     # 5. Inject Data Flush-Right
     current_col = actual_start_col
     for loc_code, loc_name, metrics_data in locations_to_inject:
+        
+        # ==========================================
+        # NEW: PRE-CALCULATION BLOCK (PER YEAR)
+        # ==========================================
+        for year_str, year_data in metrics_data.items():
+            # Calculate Sesi 1
+            sr_1 = year_data.get('sekolah_rendah_1sesi', 'n.a')
+            sm_1 = year_data.get('sekolah_menengah_1sesi', 'n.a')
+            year_data['sekolah_1sesi'] = safe_add(sr_1, sm_1)
+            
+            # Calculate Sesi 2
+            sr_2 = year_data.get('sekolah_rendah_2sesi', 'n.a')
+            sm_2 = year_data.get('sekolah_menengah_2sesi', 'n.a')
+            year_data['sekolah_2sesi'] = safe_add(sr_2, sm_2)
+        # ==========================================
         
         # Write Column Header dynamically
         header_cell = sheet.range((target_row, current_col))

@@ -2,6 +2,25 @@ import pandas as pd
 import re
 from src.data_provider import get_metrics_dict
 
+def safe_add(*values):
+    """
+    Menambah berbilang nilai secara selamat.
+    Mengabaikan nilai 'n.a', None, atau string kosong.
+    Mengembalikan 'n.a' jika KESEMUA nilai adalah tiada/n.a.
+    """
+    parsed = []
+    for v in values:
+        if pd.isna(v) or str(v).strip().lower() in ['', 'n.a', 'n.a.', 'nan']:
+            continue
+        try:
+            parsed.append(float(v))
+        except ValueError:
+            continue
+
+    if not parsed:
+        return "n.a"
+    return sum(parsed)
+
 # ==========================================
 # 1. MAPPING CONFIGURATION 
 # ==========================================
@@ -11,16 +30,16 @@ HEADER_ANCHOR = "PENDIDIKAN SWASTA" # e.g., "MAKLUMAT ASAS" or "KEMISKINAN"
 # TODO: Map the EXCEL ROW NUMBER to a TUPLE of ("METRIC_NAME", "YEAR")
 # Format: { Excel_Row: ("metric_name_in_database", "Year") }
 ROW_MAP = {
-    10:  ("bilangan_sekolah", "2024"), #sum
-    11:  ("bilangan_sekolah", "2025"), #sum
-    13:  ("sekolah_rendah", "2024"),
-    14:  ("sekolah_rendah", "2025"),
+    10:  ("bilangan_sekolah", "2024"), # sum var_smk + var_srk
+    11:  ("bilangan_sekolah", "2025"), # sum var_smk + var_srk
+    13:  ("sekolah_rendah", "2024"), # sum sekolah_rendah_akademik + sekolah_rendah_agama = var_srk
+    14:  ("sekolah_rendah", "2025"), # sum sekolah_rendah_akademik + sekolah_rendah_agama = var_srk
     16:  ("sekolah_rendah_akademik", "2024"),
     17:  ("sekolah_rendah_akademik", "2025"),
     19:  ("sekolah_rendah_agama", "2024"),
     20:  ("sekolah_rendah_agama", "2025"),
-    22:  ("sekolah_menengah", "2024"), #sum
-    23:  ("sekolah_menengah", "2025"), #sum
+    22:  ("sekolah_menengah", "2024"), # sum sekolah_menengah_akademik + sekolah_menengah_agama + sekolah_menengah_cina = var_smk
+    23:  ("sekolah_menengah", "2025"), # sum sekolah_menengah_akademik + sekolah_menengah_agama + sekolah_menengah_cina = var_smk
     25:  ("sekolah_menengah_akademik", "2024"),
     26:  ("sekolah_menengah_akademik", "2025"),
     28:  ("sekolah_menengah_agama", "2024"),
@@ -33,16 +52,16 @@ ROW_MAP = {
     38:  ("sekolah_antarabangsa", "2025"),
     40:  ("sekolah_ekspatriat", "2024"),
     41:  ("sekolah_ekspatriat", "2025"),
-    43:  ("bilangan_guru", "2024"), #sum
-    44:  ("bilangan_guru", "2025"), #sum
-    46:  ("bilangan_guru_sekolah_rendah", "2024"),
-    47:  ("bilangan_guru_sekolah_rendah", "2025"),
+    43:  ("bilangan_guru", "2024"), # sum var_srk_guru + var_smk_guru
+    44:  ("bilangan_guru", "2025"), # sum var_srk_guru + var_smk_guru
+    46:  ("bilangan_guru_sekolah_rendah", "2024"), # sum guru_sekolah_rendah_akademik + guru_sekolah_rendah_agama = var_srk_guru
+    47:  ("bilangan_guru_sekolah_rendah", "2025"), # sum guru_sekolah_rendah_akademik + guru_sekolah_rendah_agama = var_srk_guru
     49:  ("guru_sekolah_rendah_akademik", "2024"),
     50:  ("guru_sekolah_rendah_akademik", "2025"),
     52:  ("guru_sekolah_rendah_agama", "2024"),
     53:  ("guru_sekolah_rendah_agama", "2025"),
-    55:  ("bilangan_guru_sekolah_menengah", "2024"),
-    56:  ("bilangan_guru_sekolah_menengah", "2025"),
+    55:  ("bilangan_guru_sekolah_menengah", "2024"), # sum guru_sekolah_menengah_akademik + guru_sekolah_menengah_agama + guru_sekolah_menengah_cina = var_smk_guru
+    56:  ("bilangan_guru_sekolah_menengah", "2025"), # sum guru_sekolah_menengah_akademik + guru_sekolah_menengah_agama + guru_sekolah_menengah_cina = var_smk_guru
     58:  ("guru_sekolah_menengah_akademik", "2024"),
     59:  ("guru_sekolah_menengah_akademik", "2025"),
     61:  ("guru_sekolah_menengah_agama", "2024"),
@@ -55,16 +74,16 @@ ROW_MAP = {
     71:  ("guru_antarabangsa", "2025"),
     73:  ("guru_ekspatriat", "2024"),
     74:  ("guru_ekspatriat", "2025"),
-    91:  ("bilangan_murid", "2024"), #sum
-    92:  ("bilangan_murid", "2025"), #sum
-    94:  ("bilangan_murid_sekolah_rendah", "2024"),
-    95:  ("bilangan_murid_sekolah_rendah", "2025"),
+    91:  ("bilangan_murid", "2024"), # sum var_srk_rendah + var_smk_murid
+    92:  ("bilangan_murid", "2025"), # sum var_srk_rendah + var_smk_murid
+    94:  ("bilangan_murid_sekolah_rendah", "2024"), # sum = murid_sekolah_rendah_akademik + murid_sekolah_rendah_agama = var_srk_rendah
+    95:  ("bilangan_murid_sekolah_rendah", "2025"), # sum = murid_sekolah_rendah_akademik + murid_sekolah_rendah_agama = var_srk_rendah
     97:  ("murid_sekolah_rendah_akademik", "2024"),
     98:  ("murid_sekolah_rendah_akademik", "2025"),
     100:  ("murid_sekolah_rendah_agama", "2024"),
     101:  ("murid_sekolah_rendah_agama", "2025"),
-    103:  ("bilangan_murid_sekolah_menengah", "2024"),
-    104:  ("bilangan_murid_sekolah_menengah", "2025"),
+    103:  ("bilangan_murid_sekolah_menengah", "2024"), # sum murid_sekolah_menengah_akademik + murid_sekolah_menengah_agama + murid_sekolah_menengah_cina = var_smk_murid
+    104:  ("bilangan_murid_sekolah_menengah", "2025"), # sum murid_sekolah_menengah_akademik + murid_sekolah_menengah_agama + murid_sekolah_menengah_cina = var_smk_murid
     106:  ("murid_sekolah_menengah_akademik", "2024"),
     107:  ("murid_sekolah_menengah_akademik", "2025"),
     109:  ("murid_sekolah_menengah_agama", "2024"),
@@ -80,7 +99,7 @@ ROW_MAP = {
 }
 
 # TODO: Set the furthest row down that contains dummy template data for cleanup
-MAX_ROW_TO_CLEAN = 50 # Adjust based on how far down the template's dummy data goes
+MAX_ROW_TO_CLEAN = 132 # Adjust based on how far down the template's dummy data goes
 
 # ==========================================
 # 2. DYNAMIC BOUNDARY SCANNER (Universal)
@@ -212,6 +231,62 @@ def populate_jadual_6_1(sheet, hierarchy, report_type):
     # 5. Inject Data Flush-Right
     current_col = actual_start_col
     for loc_code, loc_name, metrics_data in locations_to_inject:
+        
+        # ==========================================
+        # PRE-CALCULATION BLOCK (JADUAL 6.1)
+        # ==========================================
+        for year_str, year_data in metrics_data.items():
+            # --- 1. KIRAAN SEKOLAH ---
+            # Sekolah Rendah = Akademik + Agama
+            sr_aka = year_data.get('sekolah_rendah_akademik', 'n.a')
+            sr_aga = year_data.get('sekolah_rendah_agama', 'n.a')
+            var_srk = safe_add(sr_aka, sr_aga)
+            year_data['sekolah_rendah'] = var_srk
+
+            # Sekolah Menengah = Akademik + Agama + Cina
+            sm_aka = year_data.get('sekolah_menengah_akademik', 'n.a')
+            sm_aga = year_data.get('sekolah_menengah_agama', 'n.a')
+            sm_cin = year_data.get('sekolah_menengah_cina', 'n.a')
+            var_smk = safe_add(sm_aka, sm_aga, sm_cin)
+            year_data['sekolah_menengah'] = var_smk
+
+            # Jumlah Sekolah = Sekolah Rendah + Sekolah Menengah
+            year_data['bilangan_sekolah'] = safe_add(var_srk, var_smk)
+
+            # --- 2. KIRAAN GURU ---
+            # Guru Sekolah Rendah = Akademik + Agama
+            gr_aka = year_data.get('guru_sekolah_rendah_akademik', 'n.a')
+            gr_aga = year_data.get('guru_sekolah_rendah_agama', 'n.a')
+            var_srk_guru = safe_add(gr_aka, gr_aga)
+            year_data['bilangan_guru_sekolah_rendah'] = var_srk_guru
+
+            # Guru Sekolah Menengah = Akademik + Agama + Cina
+            gm_aka = year_data.get('guru_sekolah_menengah_akademik', 'n.a')
+            gm_aga = year_data.get('guru_sekolah_menengah_agama', 'n.a')
+            gm_cin = year_data.get('guru_sekolah_menengah_cina', 'n.a')
+            var_smk_guru = safe_add(gm_aka, gm_aga, gm_cin)
+            year_data['bilangan_guru_sekolah_menengah'] = var_smk_guru
+
+            # Jumlah Guru = Guru SR + Guru SM
+            year_data['bilangan_guru'] = safe_add(var_srk_guru, var_smk_guru)
+
+            # --- 3. KIRAAN MURID ---
+            # Murid Sekolah Rendah = Akademik + Agama
+            mr_aka = year_data.get('murid_sekolah_rendah_akademik', 'n.a')
+            mr_aga = year_data.get('murid_sekolah_rendah_agama', 'n.a')
+            var_srk_murid = safe_add(mr_aka, mr_aga)
+            year_data['bilangan_murid_sekolah_rendah'] = var_srk_murid
+
+            # Murid Sekolah Menengah = Akademik + Agama + Cina
+            mm_aka = year_data.get('murid_sekolah_menengah_akademik', 'n.a')
+            mm_aga = year_data.get('murid_sekolah_menengah_agama', 'n.a')
+            mm_cin = year_data.get('murid_sekolah_menengah_cina', 'n.a')
+            var_smk_murid = safe_add(mm_aka, mm_aga, mm_cin)
+            year_data['bilangan_murid_sekolah_menengah'] = var_smk_murid
+
+            # Jumlah Murid = Murid SR + Murid SM
+            year_data['bilangan_murid'] = safe_add(var_srk_murid, var_smk_murid)
+        # ==========================================
         
         # Write Column Header dynamically
         header_cell = sheet.range((target_row, current_col))

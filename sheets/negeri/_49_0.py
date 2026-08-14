@@ -56,7 +56,7 @@ def sanitize_value(val):
 # 2. REPORT INJECTION ENGINE
 # ==========================================
 # TODO: Rename this function to match your new Jadual (e.g., populate_jadual_50)
-def populate_jadual_49(sheet, hierarchy, report_type):
+def populate_jadual_49_0(sheet, hierarchy, report_type):
     state_name = hierarchy.get('state_name', 'Unknown State')
     state_code = hierarchy.get('state_code', '00')
     
@@ -122,4 +122,4 @@ def populate_jadual_49(sheet, hierarchy, report_type):
         print("     [FORMAT] State only needs 1 page. Eliminating Page 2.")
         # TODO: Adjust the `.delete()` row range (e.g., '58:300') to precisely target 
         # where Page 1's footer ends and Page 2 begins in the new template.
-        sheet.range('58:300').delete()
+        sheet.range('62:300').delete()
