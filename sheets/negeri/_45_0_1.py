@@ -2,7 +2,7 @@ import pandas as pd
 from src.data_provider import get_metrics_dict
 
 # ==========================================
-# MAPPING CONFIGURATION FOR JADUAL 45.0 (NEGERI)
+# MAPPING CONFIGURATION FOR JADUAL 45.0 (samb.)(NEGERI)
 # ==========================================
 # Map the EXCEL ROW NUMBER to the METRIC NAME in the database
 ROW_MAP = {
