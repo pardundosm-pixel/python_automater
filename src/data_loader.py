@@ -1,4 +1,3 @@
-# data_loader.py (added progress print)
 import pandas as pd
 from config.settings import DATABASE_PATH
 
@@ -12,9 +11,10 @@ class Database:
         self.dim_geo = self.all_sheets.get('dim_geografi')
         self.dim_daerah = self.all_sheets.get('dim_daerah')
         
-        # 2. Isolated Domain Dimensions (PDRM & JKM)
+        # 2. Isolated Domain Dimensions
         self.dim_pdrm = self.all_sheets.get('dim_daerah_pdrm')
         self.dim_jkm = self.all_sheets.get('dim_cawangan_jkm')
+        self.dim_meteorologi = self.all_sheets.get('dim_meteorologi')
         
         # 3. Standard Fact Tables
         self.fact_dun = self.all_sheets.get('fact_metrics_dun')
@@ -23,11 +23,10 @@ class Database:
         self.fact_daerah = self.all_sheets.get('fact_metrics_daerah')
         self.fact_malaysia = self.all_sheets.get('fact_metrics_malaysia')
         
-        # 4. NEW: Isolated Domain Fact Tables
+        # 4. Isolated Domain Fact Tables
         self.fact_pdrm = self.all_sheets.get('fact_metrics_daerah_pdrm')
         self.fact_jkm = self.all_sheets.get('fact_metrics_cawangan_jkm')
-        
-        print("✅ Database loaded successfully.\n")
+        self.fact_meteorologi = self.all_sheets.get('fact_metrics_meteorologi')
 
-# Initialize the database instance to be imported by other modules
+# Expose a single instance to be imported across the app
 db = Database()

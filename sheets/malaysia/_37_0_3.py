@@ -15,21 +15,15 @@ COL_MAP = {
 # Map Excel Row Index to a tuple of ("Stesen Name", "State Code", "Metric Name")
 # The State Code prevents collisions (e.g., Johor is "01", Kedah is "02")
 ROW_MAP = {
-    # SARAWAK (State Code "13")
-    7: ("Sibu", "13", "jumlah_volum_hujan"),
-    8: ("Sibu", "13", "bilangan_hari_hujan"),
-    9: ("Sri Aman", "13", "jumlah_volum_hujan"),
-    10: ("Sri Aman", "13", "bilangan_hari_hujan"),
-
     # LABUAN (State Code "15")
-    12:  ("Labuan", "15", "jumlah_volum_hujan"),
-    13:  ("Labuan", "15", "bilangan_hari_hujan"),
+    7:  ("Labuan", "15", "minimum_suhu"),
+    8:  ("Labuan", "15", "maksimum_suhu"),
 }
 
 # ==========================================
 # 2. REPORT INJECTION ENGINE
 # ==========================================
-def populate_jadual_38_0_3(sheet, hierarchy, report_type):
+def populate_jadual_37_0_3(sheet, hierarchy, report_type):
     print("  -> Populating Jadual 37.0 (Purata Suhu) untuk Malaysia")
 
     # 1. Static Title Injection

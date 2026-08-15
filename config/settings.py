@@ -4,7 +4,7 @@ import os
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Data Paths
-DATABASE_PATH = os.path.join(BASE_DIR, 'data', 'normalized_database_2026_v2.xlsx')
+DATABASE_PATH = os.path.join(BASE_DIR, 'data', 'normalized_database_2026_v4.xlsx')
 
 # ==========================================
 # MASTER TEMPLATE CONFIGURATION
