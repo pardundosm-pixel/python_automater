@@ -8,59 +8,97 @@ from src.data_provider import get_metrics_dict
 # --- SET A: NILAI (VALUE) MAPPINGS ---
 # Map the Rows for the 'Value' metrics
 ROW_MAP_VALUE = {
-    9:  "eksport_nilai",
-    11: "eksport_pertanian_nilai",
-    12: "eksport_perlombongan_nilai",
-    13: "eksport_pembuatan_nilai",
-    14: "eksport_lain_lain_nilai",
-    18: "eksport_elektrik_elektronik_nilai",
-    19: "eksport_petroleum_bertapis_nilai",
-    20: "eksport_minyak_sawit_nilai",
-    23: "import_nilai",
-    24: "import_tertangguh_nilai",
-    26: "import_barangan_modal_nilai",
-    27: "import_barangan_perantaraan_nilai",
-    28: "import_barangan_penggunaan_nilai",
-    29: "import_lain_lain_nilai",
-    33: "import_elektrik_elektronik_nilai",
-    34: "import_petroleum_bertapis_nilai",
-    35: "import_petroleum_mentah_nilai"
+    # Eksport
+    9:  "eksport_nilai_eksport",
+    11: "eksport_nilai_pertanian",
+    12: "eksport_nilai_perlombongan",
+    13: "eksport_nilai_pembuatan",
+    14: "eksport_nilai_lain_lain",
+    18: "eksport_nilai_produk_elektrik_dan_elektronik",
+    19: "eksport_nilai_keluaran_petroleum_bertapis",
+    20: "eksport_nilai_minyak_sawit_dan_produk_berasaskan_minyak_sawit",
+    
+    # Import
+    23: "import_nilai_import",
+    24: "import_nilai_tertangguh",
+    26: "import_nilai_modal",
+    27: "import_nilai_perantaraaan",
+    28: "import_nilai_penggunaan",
+    29: "import_nilai_lain_lain",
+    33: "import_nilai_elektrik_dan_elektronik",
+    34: "import_nilai_keluaran_petroleum_bertapis",
+    35: "import_nilai_petroleum_mentah",
+    
+    # Jumlah Dagangan
+    37: "nilai_jumlah_dagangan",
+    
+    # Imbangan Dagangan
+    39: "nilai_imbangan_dagangan",
+    
+    # 5 Rakan Dagangan Utama (Jumlah Dagangan)
+    41: "nilai_5_rakan",
+    42: "nilai_china",
+    43: "nilai_singapura",
+    44: "nilai_amerika",
+    45: "nilai_kesatuan_eropah",
+    46: "nilai_taiwan"
+
 }
 
 # Map Excel Columns E, F, G to Years
 COL_MAP_VALUE = {
-    5: "2022",  
     6: "2023",  
-    7: "2024"   
+    7: "2024",  
+    8: "2025"   
 }
 
 # --- SET B: PERTUMBUHAN (GROWTH) MAPPINGS ---
 # Map the Rows for the 'Percentage' metrics (Same rows, different database metric names)
 ROW_MAP_GROWTH = {
-    9:  "eksport_peratus",
-    11: "eksport_pertanian_peratus",
-    12: "eksport_perlombongan_peratus",
-    13: "eksport_pembuatan_peratus",
-    14: "eksport_lain_lain_peratus",
-    18: "eksport_elektrik_elektronik_peratus",
-    19: "eksport_petroleum_bertapis_peratus",
-    20: "eksport_minyak_sawit_peratus",
-    23: "import_peratus",
-    24: "import_tertangguh_peratus",
-    26: "import_barangan_modal_peratus",
-    27: "import_barangan_perantaraan_peratus",
-    28: "import_barangan_penggunaan_peratus",
-    29: "import_lain_lain_peratus",
-    33: "import_elektrik_elektronik_peratus",
-    34: "import_petroleum_bertapis_peratus",
-    35: "import_petroleum_mentah_peratus"
+    # Eksport
+    9:  "eksport_pertumbuhan_tahunan_eksport",
+    11: "eksport_pertumbuhan_tahunan_pertanian",
+    12: "eksport_pertumbuhan_tahunan_perlombongan",
+    13: "eksport_pertumbuhan_tahunan_pembuatan",
+    14: "eksport_pertumbuhan_tahunan_lain_lain",
+    18: "eksport_pertumbuhan_tahunan_produk_elektrik_dan_elektronik",
+    19: "eksport_pertumbuhan_tahunan_keluaran_petroleum_bertapis",
+    20: "eksport_pertumbuhan_tahunan_minyak_sawit_dan_produk_berasaskan_minyak_sawit",
+    
+    # Import
+    23: "import_pertumbuhan_tahunan_import",
+    24: "import_pertumbuhan_tahunan_tertangguh",
+    26: "import_pertumbuhan_tahunan_modal",
+    27: "import_pertumbuhan_tahunan_perantaraaan",
+    28: "import_pertumbuhan_tahunan_penggunaan",
+    29: "import_pertumbuhan_tahunan_lain_lain",
+    33: "import_pertumbuhan_tahunan_elektrik_dan_elektronik",
+    34: "import_pertumbuhan_tahunan_keluaran_petroleum_bertapis",
+    35: "import_pertumbuhan_tahunan_petroleum_mentah",
+    
+    # Jumlah Dagangan
+    37: "import_pertumbuhan_tahunan_jumlah_dagangan",
+    
+    # Imbangan Dagangan
+    39: "import_pertumbuhan_tahunan_imbangan_dagangan",
+    
+    # 5 Rakan Dagangan Utama (Jumlah Dagangan)
+    41: "pertumbuhan_tahunan_5_rakan",
+    42: "pertumbuhan_tahunan_china",
+    43: "pertumbuhan_tahunan_singapura",
+    44: "pertumbuhan_tahunan_amerika",
+    45: "pertumbuhan_tahunan_kesatuan_eropah",
+    46: "pertumbuhan_tahunan_taiwan",
+    
+    # Sumbangan kepada Jumlah Dagangan Malaysia (%)
+    48: "nilai_sumbangan_jumlah_dagangan"
 }
 
 # Map Excel Columns I, J, K to Years
 COL_MAP_GROWTH = {
-    9:  "2022",  
     10: "2023",  
-    11: "2024"   
+    11: "2024",  
+    12: "2025"   
 }
 
 
@@ -68,7 +106,7 @@ COL_MAP_GROWTH = {
 # 2. REPORT INJECTION ENGINE
 # ==========================================
 def populate_jadual_20(sheet, hierarchy, report_type):
-    print(f"  -> Populating Jadual 20.0 (Perdagangan) untuk Malaysia")
+    print(f"  -> Populating Jadual 20.0 (Eksport Import) untuk Malaysia")
 
     # 1. Fetch the Data Payload strictly for Malaysia
     metrics_data = get_metrics_dict("Malaysia", level='malaysia')
@@ -78,8 +116,8 @@ def populate_jadual_20(sheet, hierarchy, report_type):
         return
 
     # 2. Static Title Injection
-    title_bm = ": Eksport, import, jumlah dagangan dan imbangan dagangan, Malaysia, 2022 - 2024"
-    title_en = ": Exports, imports, total trade and balance of trade, Malaysia, 2022 - 2024"
+    title_bm = ": Eksport, import, jumlah dagangan dan imbangan dagangan, Malaysia, 2023 - 2025"
+    title_en = ": Exports, imports, total trade and balance of trade, Malaysia, 2023 - 2025"
     sheet.range("C3").value = title_bm
     sheet.range("C4").value = title_en
 

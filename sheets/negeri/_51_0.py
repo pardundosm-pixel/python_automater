@@ -62,7 +62,7 @@ def sanitize_value(val):
 # ==========================================
 # 2. REPORT INJECTION ENGINE
 # ==========================================
-def populate_jadual_51_0(sheet, hierarchy, report_type):
+def populate_jadual_51(sheet, hierarchy, report_type):
     state_name = hierarchy.get('state_name', 'Unknown State')
     state_code = hierarchy.get('state_code', '00')
     print(f"  -> Populating Jadual 51.0 (Kemalangan Jalan Raya) untuk {state_name}")

@@ -1,65 +1,72 @@
 import pandas as pd
 from src.data_provider import get_metrics_dict
 
-# ==========================================
-# MAPPING CONFIGURATION FOR JADUAL 14.0 (NEGERI)
-# ==========================================
-# TODO: Map the EXCEL ROW NUMBER to the METRIC NAME in the database
-# Example: 7: "jumlah_penduduk", 11: "warganegara"
+# ============================================================
+# 1. SHARED CONFIGURATION (change years here only)
+# ============================================================
+YEARS = ["2023", "2024", "2025"]
+
+# ============================================================
+# 2. JADUAL 34.0 – TABLE‑SPECIFIC CONFIGURATION
+# ============================================================
+
+# CHANGE HERE: Map each Excel row number to the ICT category.
 ROW_MAP = {
-    7:  "jumlah_penduduk",
-    11: "warganegara",
-    12: "bukan_warganegara",
-    14: "lelaki",
-    15: "perempuan",
-    18: "peratus_warganegara",
-    19: "peratus_bukan_warganegara",
-    21: "purata_pertumbuhan_penduduk",
-    26: "peratus_bumiputera",
-    27: "peratus_cina",
-    28: "peratus_india",
-    29: "peratus_lain_lain",
-    33: "umur_0_14",
-    35: "umur_15_64",
-    37: "umur_65_lebih",
-    39: "umur_18_lebih",
-    44: "jumlah_nisbah_tanggungan",
-    45: "umur_muda",
-    46: "umur_tua",
-    48: "nisbah_jantina",
-    50: "kepadatan_penduduk"
+    9 : "telefon_bimbit",
+    12: "internet",
+    14: "komputer",
+    17: "siaran_televisyen_berbayar",
+    20: "televisyen",
+    23: "radio",
+    25: "telefon_talian_tetap"
 }
 
-# TODO: Map the EXCEL COLUMN NUMBER to the YEAR STRING
-COL_MAP = {
-    4: "2023",  
-    5: "2024",  
-    6: "2025p"   
-}
+# CHANGE HERE: List all column indices for (2023 Total, Urban, Rural),
+# then (2024 Total, Urban, Rural), then (2025 Total, Urban, Rural).
+# The order must match the years in YEARS.
+COLUMN_ORDER = [
+    5, 6, 7,     # 2023: Total, Bandar, Luar bandar
+    9, 10, 12,   # 2024: Total, Bandar, Luar bandar (column 11 is skipped)
+    13, 14, 15   # 2025: Total, Bandar, Luar bandar
+]
 
-def populate_jadual_14_0(sheet, hierarchy):
-    print(f"  -> Populating Jadual 14.0 (Penduduk Negeri) for {hierarchy['state_name']}")
-    
-    # Fetch Negeri data using the state_code from hierarchy
-    metrics = get_metrics_dict(hierarchy['state_code'], 'negeri')
+# Automatically build COL_MAP – no year strings repeated!
+STRATA = ["jumlah", "bandar", "luar_bandar"]
+COL_MAP = {}
+for year_idx, year in enumerate(YEARS):
+    for strata_idx, strata in enumerate(STRATA):
+        col = COLUMN_ORDER[year_idx * 3 + strata_idx]
+        COL_MAP[col] = (year, strata)
 
-    # Dynamic Titles (Update cell reference B2 if needed)
-    title_bm = f"Anggaran penduduk pertengahan tahun, {hierarchy['state_name']}, 2023 - 2025p"
-    sheet.range("C2").value = title_bm
 
-    # Standard Injection Loop
-    for col_idx, year in COL_MAP.items():
-        year_data = metrics.get(str(year), {})
-        
-        for row_idx, metric_name in ROW_MAP.items():
-            val = year_data.get(metric_name, "n.a")
+# ============================================================
+# 3. INJECTION ENGINE
+# ============================================================
+def populate_jadual_34(sheet, hierarchy, report_type):
+    print("  -> Populating Jadual 34.0 (Peratusan capaian ICT)")
 
-            if pd.notna(val) and val != "n.a" and val != "":
-                try: 
-                    val = float(val)
-                except (ValueError, TypeError): 
+    # Titles – year range is auto‑generated from YEARS
+    title_bm = f": Peratusan capaian isi rumah terhadap perkhidmatan dan peralatan ICT mengikut strata, Malaysia, {YEARS[0]} - {YEARS[-1]}"
+    title_en = f": Percentage of households with access to ICT services and equipment by strata, Malaysia, {YEARS[0]} - {YEARS[-1]}"
+    sheet.range("C1").value = title_bm
+    sheet.range("C2").value = title_en
+
+    # Fetch data (Malaysia only)
+    malaysia_data = get_metrics_dict("Malaysia", level="negeri")
+    if not malaysia_data:
+        print("     [Warning] No data found for Malaysia.")
+        return
+
+    # Inject data
+    for row_idx, category in ROW_MAP.items():
+        for col_idx, (year, strata) in COL_MAP.items():
+            metric_name = f"{strata}_{category}"
+            year_data = malaysia_data.get(year, {})
+            raw_val = year_data.get(metric_name, "n.a")
+            val = "n.a"
+            if pd.notna(raw_val) and str(raw_val).strip() not in ("", "n.a", "n.a.", "-"):
+                try:
+                    val = float(raw_val)
+                except (ValueError, TypeError):
                     pass
-            else:
-                val = "n.a"
-            
             sheet.range((row_idx, col_idx)).value = val

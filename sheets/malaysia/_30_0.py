@@ -2,64 +2,69 @@ import pandas as pd
 from src.data_provider import get_metrics_dict
 
 # ==========================================
-# MAPPING CONFIGURATION FOR JADUAL 14.0 (NEGERI)
+# MAPPING CONFIGURATION FOR JADUAL 18.0 (Stok Modal)
 # ==========================================
 # TODO: Map the EXCEL ROW NUMBER to the METRIC NAME in the database
 # Example: 7: "jumlah_penduduk", 11: "warganegara"
 ROW_MAP = {
-    7:  "jumlah_penduduk",
-    11: "warganegara",
-    12: "bukan_warganegara",
-    14: "lelaki",
-    15: "perempuan",
-    18: "peratus_warganegara",
-    19: "peratus_bukan_warganegara",
-    21: "purata_pertumbuhan_penduduk",
-    26: "peratus_bumiputera",
-    27: "peratus_cina",
-    28: "peratus_india",
-    29: "peratus_lain_lain",
-    33: "umur_0_14",
-    35: "umur_15_64",
-    37: "umur_65_lebih",
-    39: "umur_18_lebih",
-    44: "jumlah_nisbah_tanggungan",
-    45: "umur_muda",
-    46: "umur_tua",
-    48: "nisbah_jantina",
-    50: "kepadatan_penduduk"
+    # Sekolah kerajaan & bantuan kerajaan (Government school & government aid)
+    10: "bilangan_murid_prasekolah_kerajaan",        # Prasekolah / Pre-school
+    13: "bilangan_murid_rendah_kerajaan",            # Rendah / Primary
+    16: "bilangan_murid_menengah_rendah_kerajaan",   # Menengah rendah / Lower secondary
+    19: "bilangan_murid_menengah_atas_kerajaan",     # Menengah atas / Upper secondary
+    22: "bilangan_murid_khas_rendah_kerajaan",       # Pendidikan khas, peringkat rendah
+    25: "bilangan_murid_khas_menengah_kerajaan",     # Pendidikan khas, peringkat menengah
+
+    # Tadika, sekolah rendah dan menengah swasta (Private kindergarten, primary and secondary school)
+    30: "bilangan_murid_swasta_tadika",              # Tadika / Kindergarten
+    33: "bilangan_murid_swasta_rendah",              # Rendah / Primary
+    36: "bilangan_murid_swasta_menengah",            # Menengah / Secondary
+    39: "bilangan_murid_swasta_khas",                # Sekolah Pendidikan Khas
+    42: "bilangan_murid_swasta_antarabangsa",        # Sekolah Antarabangsa
+    45: "bilangan_murid_swasta_ekspatriat"           # Sekolah Ekspatriat
 }
 
 # TODO: Map the EXCEL COLUMN NUMBER to the YEAR STRING
 COL_MAP = {
-    4: "2023",  
-    5: "2024",  
-    6: "2025p"   
+    6 : "2024",  
+    7 : "2025" 
 }
 
-def populate_jadual_14_0(sheet, hierarchy):
-    print(f"  -> Populating Jadual 14.0 (Penduduk Negeri) for {hierarchy['state_name']}")
+def populate_jadual_30_0(sheet, hierarchy, report_type):
+    print(f"  -> Populating Jadual 30.0 (Bil Murid) untuk Malaysia_30_0")
     
-    # Fetch Negeri data using the state_code from hierarchy
-    metrics = get_metrics_dict(hierarchy['state_code'], 'negeri')
+    # 1. Fetch the Data Payload strictly for Malaysia
+    metrics_data = get_metrics_dict("Malaysia", level='negeri')
+    
+    if not metrics_data:
+            print(f"     [Warning] No data found for Malaysia.")
+            return
 
-    # Dynamic Titles (Update cell reference B2 if needed)
-    title_bm = f"Anggaran penduduk pertengahan tahun, {hierarchy['state_name']}, 2023 - 2025p"
+    # ==========================================
+        # DYNAMIC TABLE TITLE MODIFICATION
+    # ==========================================
+    title_bm = ": Bilangan murid pelbagai peringkat dan jenis sekolah, Malaysia, 2024 - 2025"
+    title_en = ": Number of pupils of various level and types of school, Malaysia, 2024 - 2025"
+        
+    # Set the exact cells where your title sits in the template
+    # Targeting Column C based on standard template behavior
     sheet.range("C2").value = title_bm
+    sheet.range("C3").value = title_en
 
     # Standard Injection Loop
     for col_idx, year in COL_MAP.items():
-        year_data = metrics.get(str(year), {})
-        
-        for row_idx, metric_name in ROW_MAP.items():
-            val = year_data.get(metric_name, "n.a")
-
-            if pd.notna(val) and val != "n.a" and val != "":
-                try: 
-                    val = float(val)
-                except (ValueError, TypeError): 
-                    pass
-            else:
-                val = "n.a"
+            year_data = metrics_data.get(str(year), {})
             
-            sheet.range((row_idx, col_idx)).value = val
+            for row_idx, metric_name in ROW_MAP.items():
+                val = year_data.get(metric_name, "n.a")
+                
+                # Clean and parse missing values
+                if pd.notna(val) and val != "n.a" and val != "":
+                    try: 
+                        val = float(val)
+                    except (ValueError, TypeError): 
+                        pass
+                else:
+                    val = "n.a"
+                    
+                sheet.range((row_idx, col_idx)).value = val

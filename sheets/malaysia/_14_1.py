@@ -14,32 +14,32 @@ ROW_MAP = {
     13:  "kdnk_pada_harga_malar_2015_pembuatan",
     14:  "kdnk_pada_harga_malar_2015_pembinaan",
     15:  "kdnk_pada_harga_malar_2015_perkhidmatan",
-    16:  "kdnk_pada_harga_malar_2015_duti_import",
+    16:  "kdnk_pada_harga_malar_2015_tambah_duti_import", #n.a
     
     # KDNK mengikut Jenis Aktiviti Ekonomi pada Harga Malar 2015 - Perubahan Peratusan Tahunan (%)
-    21:  "kdnk_perubahan_peratusan_tahunan_jumlah", # Not in database
+    21:  "kdnk_perubahan_peratusan_tahunan_jumlah",
     22:  "kdnk_pada_harga_malar_2015_perubahan_peratusan_tahunan_pertanian",
     23:  "kdnk_pada_harga_malar_2015_perubahan_peratusan_tahunan_perlombongan_dan_pengkuarian",
     24:  "kdnk_pada_harga_malar_2015_perubahan_peratusan_tahunan_pembuatan",
     25:  "kdnk_pada_harga_malar_2015_perubahan_peratusan_tahunan_pembinaan",
     26:  "kdnk_pada_harga_malar_2015_perubahan_peratusan_tahunan_perkhidmatan",
-    27:  "kdnk_pada_harga_malar_2015_perubahan_peratusan_tahunan_duti_import",
+    27:  "kdnk_pada_harga_malar_2015_perubahan_peratusan_tahunan_tambah_duti_import", #n.a
     
     # KDNK mengikut Jenis Perbelanjaan pada Harga Malar 2015 (RM juta)
     32:  "perbelanjaan_kdnk_pada_harga_malar_2015_jumlah",
-    33:  "perbelanjaan_kdnk_pada_harga_malar_2015_perbelanjaan_pengunaan_akhir_swasta",
-    34:  "perbelanjaan_kdnk_pada_harga_malar_2015_perbelanjaan_pengunaan_akhir_kerajaan",
+    33:  "perbelanjaan_kdnk_pada_harga_malar_2015_perbelanjaan_penggunaan_akhir_swasta", #n.a
+    34:  "perbelanjaan_kdnk_pada_harga_malar_2015_perbelanjaan_penggunaan_akhir_kerajaan", #n.a
     35:  "perbelanjaan_kdnk_pada_harga_malar_2015_pembentukan_modal_tetap_kasar",
-    36:  "perbelanjaan_kdnk_pada_harga_malar_2015_perubahan_inventori_dan_barangan_berharga",
+    36:  "perbelanjaan_kdnk_pada_harga_malar_2015_perubahan_inventori_dan_barang_berharga", #n.a //barangan -> barang
     37:  "perbelanjaan_kdnk_pada_harga_malar_2015_eksport_barangan_dan_perkhidmatan",
     38:  "perbelanjaan_kdnk_pada_harga_malar_2015_tolak_import_barangan_dan_perkhidmatan",
     
     # KDNK mengikut Jenis Perbelanjaan pada Harga Malar 2015 - Perubahan Peratusan Tahunan (%)
     44:  "perbelanjaan_kdnk_perubahan_peratusan_tahunan_pada_harga_malar_2015_jumlah",
-    45:  "perbelanjaan_kdnk_perubahan_peratusan_tahunan_pada_harga_malar_2015_perbelanjaan_pengunaan_akhir_swasta",
-    46:  "perbelanjaan_kdnk_perubahan_peratusan_tahunan_pada_harga_malar_2015_perbelanjaan_pengunaan_akhir_kerajaan",
+    45:  "perbelanjaan_kdnk_perubahan_peratusan_tahunan_pada_harga_malar_2015_perbelanjaan_penggunaan_akhir_swasta", #n.a
+    46:  "perbelanjaan_kdnk_perubahan_peratusan_tahunan_pada_harga_malar_2015_perbelanjaan_penggunaan_akhir_kerajaan", #n.a
     47:  "perbelanjaan_kdnk_perubahan_peratusan_tahunan_pada_harga_malar_2015_pembentukan_modal_tetap_kasar",
-    48:  "perbelanjaan_kdnk_perubahan_peratusan_tahunan_pada_harga_malar_2015_perubahan_inventori_dan_barangan_berharga",
+    48:  "perbelanjaan_kdnk_perubahan_peratusan_tahunan_pada_harga_malar_2015_perubahan_inventori_dan_barang_berharga", #n.a //barangan -> barang
     49:  "perbelanjaan_kdnk_perubahan_peratusan_tahunan_pada_harga_malar_2015_eksport_barangan_dan_perkhidmatan",
     50:  "perbelanjaan_kdnk_perubahan_peratusan_tahunan_pada_harga_malar_2015_tolak_import_barangan_dan_perkhidmatan"
     
