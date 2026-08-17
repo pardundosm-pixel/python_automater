@@ -14,7 +14,7 @@ ROW_MAP = {
     14: "kdnk_pada_harga_pembeli_cukai_tolak_subsidi_ke_atas_pengeluaran_dan_import",
     
     # KDNK pada harga pembeli - Perubahan Peratusan Tahunan (%)
-    16: "",
+    16: "", #n.a
     19: "kdnk_perubahan_peratusan_tahunan_pampasan_pekerja",
     20: "kdnk_perubahan_peratusan_tahunan_lebihan_kendalian_kasar",
     21: "kdnk_perubahan_peratusan_tahunan_cukai_tolak_subsidi_ke_atas_pengeluaran_dan_import",
