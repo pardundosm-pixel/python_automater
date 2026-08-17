@@ -13,7 +13,7 @@ ROW_MAP = {
     13: "kdnk_perbelanjaan_harga_semasa_pembuatan",
     14: "kdnk_perbelanjaan_harga_semasa_pembinaan",
     15: "kdnk_perbelanjaan_harga_semasa_perkhidmatan",
-    16: "kdnk_perbelanjaan_harga_semasa_duti_import",
+    16: "kdnk_perbelanjaan_harga_semasa_tambah_duit_import", #n.a
 
     # KDNK mengikut Jenis Aktiviti Ekonomi pada Harga Semasa - Perubahan Peratusan Tahunan (%)
     21: "kdnk_perubahan_peratusan_tahunan_jumlah",
@@ -22,25 +22,25 @@ ROW_MAP = {
     24: "kdnk_perubahan_peratusan_tahunan_pembuatan",
     25: "kdnk_perubahan_peratusan_tahunan_pembinaan",
     26: "kdnk_perubahan_peratusan_tahunan_perkhidmatan",
-    27: "kdnk_perubahan_peratusan_tahunan_duti_import",      # Assuming row sequence continues
+    27: "kdnk_perubahan_peratusan_tahunan_tambah_duti_import", #n.a
     
     # KDNK mengikut Jenis Perbelanjaan pada Harga Semasa (RM juta)
     32: "perbelanjaan_kdnk_jumlah",
-    33: "perbelanjaan_kdnk_perbelanjaan_pengunaan_akhir_swasta",
-    34: "perbelanjaan_kdnk_perbelanjaan_pengunaan_akhir_kerajaan",
+    33: "perbelanjaan_kdnk_perbelanjaan_pengunaan_akhir_swasta", 
+    34: "perbelanjaan_kdnk_perbelanjaan_pengunaan_akhir_kerajaan", 
     35: "perbelanjaan_kdnk_pembentukan_modal_tetap_kasar",
-    36: "perbelanjaan_kdnk_perubahan_inventori_dan_barangan_berharga",
+    36: "perbelanjaan_kdnk_perubahan_inventori_dan_barangan_berharga", 
     37: "perbelanjaan_kdnk_eksport_barangan_dan_perkhidmatan",
     38: "perbelanjaan_kdnk_tolak_import_barangan_dan_perkhidmatan",
     
     # KDNK mengikut Jenis Perbelanjaan pada Harga Semasa - Perubahan Peratusan Tahunan (%)
     43: "perbelanjaan_kdnk_perubahan_peratusan_tahunan_jumlah",
     44: "perbelanjaan_kdnk_perubahan_peratusan_tahunan_perbelanjaan_penggunaan_akhir_swasta",
-    45: "perbelanjaan_kdnk_perubahan_peratusan_tahunan_perbelanjaan_penggunaan_akhir_kerajaan",
+    45: "perbelanjaan_kdnk_perubahan_peratusan_tahunan_perbelanjaan_penggunaan_akhir_kerajaan", 
     46: "perbelanjaan_kdnk_perubahan_peratusan_tahunan_pembentukan_modal_tetap_kasar",
-    47: "perbelanjaan_kdnk_perubahan_peratusan_tahunan_perubahan_inventori_dan_barangan_berharga",
-    48: "perbelanjaan_kdnk_perubahan_peratusan_tahunan_eksport_barangan_dan_perkhidmatan",
-    49: "perbelanjaan_kdnk_perubahan_peratusan_tahunan_tolak_import_barangan_dan_perkhidmatan"
+    47: "perbelanjaan_kdnk_perubahan_peratusan_tahunan_perubahan_inventori_dan_barangan_berharga", 
+    48: "perbelanjaan_kdnk_perubahan_peratusan_tahunan_eksport_barangan_dan_perkhidmatan", 
+    49: "perbelanjaan_kdnk_perubahan_peratusan_tahunan_tolak_import_barangan_dan_perkhidmatan" 
 }
 
 # Map the EXCEL COLUMN NUMBER to the YEAR STRING
