@@ -243,12 +243,12 @@ def get_negeri_hierarchy(state_code: str):
         daerah_mask = dim_daerah['kod_negeri'].astype(str).str.replace(r'\.0$', '', regex=True).str.zfill(2) == clean_target
         daerah_subset = dim_daerah[daerah_mask]
         
-        # Extract the district codes and names
-        districts_raw = daerah_subset[['kod_daerah', 'nama_daerah']].drop_duplicates().dropna().to_dict('records')
+        # Extract the district codes and names using the new official district columns
+        districts_raw = daerah_subset[['kod_daerah_pentadbiran', 'daerah_pentadbiran']].drop_duplicates().dropna().to_dict('records')
         
         # Filter out empty or "n.a." values
-        districts = [{'code': d['kod_daerah'], 'name': d['nama_daerah']} 
-                        for d in districts_raw if str(d['kod_daerah']).lower() not in ['n.a.', 'n.a', 'na']]
+        districts = [{'code': d['kod_daerah_pentadbiran'], 'name': d['daerah_pentadbiran']} 
+                        for d in districts_raw if str(d['kod_daerah_pentadbiran']).lower() not in ['n.a.', 'n.a', 'na']]
     else:
         print("[DATA] Warning: 'dim_daerah' sheet not found in the database. Returning empty district list.")
         districts = []
