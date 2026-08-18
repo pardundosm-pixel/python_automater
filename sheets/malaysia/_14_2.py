@@ -75,8 +75,8 @@ def populate_jadual_14_2(sheet, hierarchy, report_type):
     # Titles
     title_bm = ": Keluaran Dalam Negeri Kasar (KDNK), Malaysia, 2023 - 2025 (samb.)"
     title_en = ": Gross Domestic Product (GDP), Malaysia, 2023 - 2025 (cont'd)"
-    sheet.range("C3").value = title_bm
-    sheet.range("C4").value = title_en
+    sheet.range("C4").value = title_bm
+    sheet.range("C5").value = title_en
 
     # Data injection
     for col_idx, year in COL_MAP.items():

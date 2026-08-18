@@ -16,7 +16,7 @@ ROW_MAP = {
     16: "kdnk_perbelanjaan_harga_semasa_tambah_duit_import", #n.a
 
     # KDNK mengikut Jenis Aktiviti Ekonomi pada Harga Semasa - Perubahan Peratusan Tahunan (%)
-    21: "kdnk_perubahan_peratusan_tahunan_jumlah",
+    21: "kdnk_harga_semasa_perubahan_peratusan_tahunan_jumlah",
     22: "kdnk_perubahan_peratusan_tahunan_pertanian",
     23: "kdnk_perubahan_peratusan_tahunan_perlombongan_dan_pengkuarian",
     24: "kdnk_perubahan_peratusan_tahunan_pembuatan",

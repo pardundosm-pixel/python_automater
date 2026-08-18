@@ -17,7 +17,7 @@ ROW_MAP = {
     16:  "kdnk_pada_harga_malar_2015_tambah_duti_import", #n.a
     
     # KDNK mengikut Jenis Aktiviti Ekonomi pada Harga Malar 2015 - Perubahan Peratusan Tahunan (%)
-    21:  "kdnk_perubahan_peratusan_tahunan_jumlah",
+    21:  "kdnk_pada_harga_malar_2015_perubahan_peratusan_tahunan_jumlah",
     22:  "kdnk_pada_harga_malar_2015_perubahan_peratusan_tahunan_pertanian",
     23:  "kdnk_pada_harga_malar_2015_perubahan_peratusan_tahunan_perlombongan_dan_pengkuarian",
     24:  "kdnk_pada_harga_malar_2015_perubahan_peratusan_tahunan_pembuatan",
