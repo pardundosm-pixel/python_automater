@@ -33,7 +33,7 @@ def populate_jadual_21_0(sheet, hierarchy, report_type):
     print(f"  -> Populating Jadual 21.0 (Pelancongan Domestik) untuk Malaysia_21_0")
     
     # 1. Fetch the Data Payload strictly for Malaysia
-    metrics_data = get_metrics_dict("Malaysia", level='malaysia')
+    metrics_data = get_metrics_dict("00", level='negeri')
     
     if not metrics_data:
             print(f"     [Warning] No data found for Malaysia.")

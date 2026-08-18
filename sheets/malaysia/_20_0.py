@@ -69,7 +69,7 @@ ROW_MAP_GROWTH = {
     23: "import_pertumbuhan_tahunan_import",
     24: "import_pertumbuhan_tahunan_tertangguh",
     26: "import_pertumbuhan_tahunan_modal",
-    27: "import_pertumbuhan_tahunan_perantaraaan",
+    27: "import_pertumbuhan_tahunan_perantaraan",
     28: "import_pertumbuhan_tahunan_penggunaan",
     29: "import_pertumbuhan_tahunan_lain_lain",
     33: "import_pertumbuhan_tahunan_elektrik_dan_elektronik",

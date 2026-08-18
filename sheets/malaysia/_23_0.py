@@ -44,16 +44,16 @@ ROW_MAP = {
 
 # TODO: Map the EXCEL COLUMN NUMBER to the YEAR STRING
 COL_MAP = {
-    6 : "2023",  
-    7 : "2024",  
-    8 : "2025"   
+    7 : "2023",  
+    8 : "2024",  
+    9 : "2025"   
 }
 
 def populate_jadual_23_0(sheet, hierarchy, report_type):
     print(f"  -> Populating Jadual 23.0 (IHP) untuk Malaysia_23_0")
     
     # 1. Fetch the Data Payload strictly for Malaysia
-    metrics_data = get_metrics_dict("Malaysia", level='malaysia')
+    metrics_data = get_metrics_dict("00", level='negeri')
     
     if not metrics_data:
             print(f"     [Warning] No data found for Malaysia.")
@@ -67,8 +67,8 @@ def populate_jadual_23_0(sheet, hierarchy, report_type):
         
     # Set the exact cells where your title sits in the template
     # Targeting Column C based on standard template behavior
-    sheet.range("C1").value = title_bm
-    sheet.range("C2").value = title_en
+    sheet.range("D1").value = title_bm
+    sheet.range("D2").value = title_en
 
     # Standard Injection Loop
     for col_idx, year in COL_MAP.items():

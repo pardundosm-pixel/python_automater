@@ -66,16 +66,16 @@ ROW_MAP = {
 
 # TODO: Map the EXCEL COLUMN NUMBER to the YEAR STRING
 COL_MAP = {
-    7  : "2023",  
-    9  : "2024",  
-    11 : "2025"   
+    8  : "2023",  
+    10 : "2024",  
+    12 : "2025"   
 }
 
 def populate_jadual_23_1_1(sheet, hierarchy, report_type):
     print(f"  -> Populating Jadual 23.1 (Harga Item Terpilih 1) untuk Malaysia_23_1_1")
     
     # 1. Fetch the Data Payload strictly for Malaysia
-    metrics_data = get_metrics_dict("Malaysia", level='negeri')
+    metrics_data = get_metrics_dict("00", level='negeri')
     
     if not metrics_data:
             print(f"     [Warning] No data found for Malaysia.")
