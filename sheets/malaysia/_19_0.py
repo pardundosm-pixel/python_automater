@@ -71,8 +71,8 @@ def populate_jadual_19_0(sheet, hierarchy, report_type):
     # ==========================================
     # DYNAMIC TABLE TITLE MODIFICATION
     # ==========================================
-    title_bm = "Jadual 19.0 : Statistik imbangan pembayaran, Malaysia, 2023 - 2025"
-    title_en = "Table 19.0 : Balance of payments statistics, Malaysia, 2023 - 2025"
+    title_bm = ": Statistik imbangan pembayaran, Malaysia, 2023 - 2025"
+    title_en = ": Balance of payments statistics, Malaysia, 2023 - 2025"
         
     # Set the exact cells where your title sits in the template
     sheet.range("C3").value = title_bm

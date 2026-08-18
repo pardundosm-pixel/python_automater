@@ -17,15 +17,15 @@ ROW_MAP = {
     
     # Akaun Satelit Pelancongan - Perubahan Peratusan Tahunan (%)
     32:  "akaun_satelit_pelancongan_perubahan_peratusan_tahunan__nilai_ditambah_kasar_industri_pelancongan",
-    35:  "akaun_satelit_pelancongan_perubahan_peratusan_tahunan__keluaran_dalam_negeri_kasar_pelancongan_langsung",
-    38:  "akaun_satelit_pelancongan_perubahan_peratusan_tahunan__perbelanjaan_pelancongan_inbound_bagi_pelawat",
-    41:  "akaun_satelit_pelancongan_perubahan_peratusan_tahunan__perbelanjaan_pelancongan_domestik_bagi_pelawat",
-    44:  "akaun_satelit_pelancongan_perubahan_peratusan_tahunan__perbelanjaan_pelancongan_outbound_bagi_pelawat",
-    47:  "akaun_satelit_pelancongan_perubahan_peratusan_tahunan__guna_tenaga_dalam_industri_pelancongan",
+    35:  "akaun_satelit_pelancongan_perubahan_peratusan_tahunan_keluaran_dalam_negeri_kasar_pelancongan_langsung",
+    38:  "akaun_satelit_pelancongan_perubahan_peratusan_tahunan_perbelanjaan_pelancongan_inbound_bagi_pelawat",
+    41:  "akaun_satelit_pelancongan_perubahan_peratusan_tahunan_perbelanjaan_pelancongan_domestik_bagi_pelawat",
+    44:  "akaun_satelit_pelancongan_perubahan_peratusan_tahunan_perbelanjaan_pelancongan_outbound_bagi_pelawat",
+    47:  "akaun_satelit_pelancongan_perubahan_peratusan_tahunan_guna_tenaga_dalam_industri_pelancongan",
     
     #Akaun Satelit Pelancongan - Peratus Sumbangan kepada KDNK (%)
-    54:  "peratus_sumbangan_kepada_keluaran_dalam_negeri_kasar_keluaran_dalam_negeri_kasar_pelancongan_langsung",
-    57:  "peratus_sumbangan_kepada_keluaran_dalam_negeri_kasar_nilai_ditambah_kasar_industri_pelancongan"
+    54:  "peratus_sumbangan_kepada_keluaran_dalam_negeri_kasar_nilai_ditambah_kasar_industri_pelancongan",
+    57:  "peratus_sumbangan_kepada_keluaran_dalam_negeri_kasar_keluaran_dalam_negeri_kasar_pelancongan_langsung"
 }
 
 # TODO: Map the EXCEL COLUMN NUMBER to the YEAR STRING

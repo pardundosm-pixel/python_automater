@@ -51,9 +51,9 @@ ROW_MAP = {
     45:  "kadar_dasar_semalaman_pada_akhir_tempoh",
     
     # Kadar Faedah Purata Institusi Perbankan (%)
-    48:  "kadar_faedah_purata_institusi_perbankan_kadar_berian_pinjaman_purata_bank_perdagangan",
+    48:  "kadar_faedah_purata_institusi_perbankan_kadar_faedah_deposit_tabungan_bank_perdagangan",
     49:  "kadar_faedah_purata_institusi_perbankan_deposit_tetap_12_bulan",
-    50:  "kadar_faedah_purata_institusi_perbankan_kadar_faedah_deposit_tabungan_bank_perdagangan",
+    50:  "kadar_faedah_purata_institusi_perbankan_kadar_berian_pinjaman_purata_bank_perdagangan",
     
     # Indikator Utama Bursa Malaysia
     53: "fte_bursa_malaysia_klci_fbm",
