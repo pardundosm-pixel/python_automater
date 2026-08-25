@@ -55,9 +55,9 @@ ROW_MAP = {
 # CHANGE HERE: Map each Excel column number to the year.
 # Columns: E=5, F=6, G=7 (2023, 2024, 2025)
 COL_MAP = {
-    5: "2023",
-    6: "2024",
-    7: "2025"
+    6: "2023",
+    7: "2024",
+    8: "2025"
 }
 
 # CHANGE HERE: List locations in the order they appear in ROW_MAP.

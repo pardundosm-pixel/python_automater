@@ -64,7 +64,7 @@ LOCATIONS = [
 
 # CHANGE HERE: Adjust start_row if the title/header rows shift.
 # In Jadual 35.0, data starts at row 11 (Malaysia).
-START_ROW = 11
+START_ROW = 9
 
 # CHANGE HERE: spacing should be len(YEARS) + 1 (2 years + 1 blank row = 3).
 ROW_MAP = generate_row_map(start_row=START_ROW, locations=LOCATIONS, years=YEARS, spacing=3)
@@ -88,8 +88,8 @@ def populate_jadual_35(sheet, hierarchy, report_type):
     title_en = f": Income, expenditure and poverty, Malaysia, {YEARS[0]} and {YEARS[-1]}"
 
     # Write the titles to the Excel sheet
-    sheet.range("C3").value = title_bm
-    sheet.range("C4").value = title_en
+    sheet.range("C1").value = title_bm
+    sheet.range("C2").value = title_en
 
     # ==========================================================
     # DATA INJECTION (no changes needed here)

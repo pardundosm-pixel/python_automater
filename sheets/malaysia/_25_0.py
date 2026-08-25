@@ -31,7 +31,7 @@ ROW_MAP = {
     34: "kemalangan_perkhidmatan",
     
     # Jumlah Kematian Pekerjaan
-    41: "jumlah_kematian",
+    41: "jumlah_kematian_pekerjaan",
     
     # Kewarganegaraan (Kematian)
     44: "kematian_warganegara",
@@ -65,7 +65,7 @@ def populate_jadual_25_0(sheet, hierarchy, report_type):
     print(f"  -> Populating Jadual 25.0 (Kemalangan Pekerja) untuk Malaysia_25_0")
     
     # 1. Fetch the Data Payload strictly for Malaysia
-    metrics_data = get_metrics_dict("Malaysia", level='negeri')
+    metrics_data = get_metrics_dict("00", level='negeri')
     
     if not metrics_data:
             print(f"     [Warning] No data found for Malaysia.")

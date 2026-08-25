@@ -52,8 +52,8 @@ def populate_jadual_22_01(sheet, hierarchy, report_type):
     # ==========================================
         # DYNAMIC TABLE TITLE MODIFICATION
     # ==========================================
-    title_bm = ": Statistik Pasaran Buruh, Malaysia, 2024 - 2026 (samb.)"
-    title_en = ": Labour Market Statistics, Malaysia, 2024 - 2026 (cont'd)"
+    title_bm = ": Statistik Pasaran Buruh, Malaysia, 2023 - 2025 (samb.)"
+    title_en = ": Labour Market Statistics, Malaysia, 2023 - 2025 (cont'd)"
         
     # Set the exact cells where your title sits in the template
     # Targeting Column C based on standard template behavior

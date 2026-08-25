@@ -5,7 +5,7 @@ from src.data_provider import get_metrics_dict
 # SHARED CONFIGURATION (change years here for ALL tables)
 # ============================================================
 # CHANGE HERE: Update this list to change the report period.
-YEARS = ["2023", "2024", "2025"]
+YEARS = ["2022", "2023", "2024"]
 
 
 def generate_row_map(start_row, locations, years, spacing=4):
@@ -103,11 +103,14 @@ def populate_jadual_31(sheet, hierarchy, report_type):
 
         for col_idx, metric_name in COL_MAP.items():
             raw_val = year_data.get(metric_name, "n.a")
-            if pd.notna(raw_val) and str(raw_val).strip() not in ("", "n.a", "n.a.", "-"):
+            
+            # Only treat NaN, "n.a", and empty string as missing
+            if pd.notna(raw_val) and raw_val != "n.a" and raw_val != "":
                 try:
                     val = float(raw_val)
                 except (ValueError, TypeError):
-                    val = "n.a"
+                    val = raw_val          # keep original value (e.g., "-")
             else:
                 val = "n.a"
+            
             sheet.range((row_idx, col_idx)).value = val

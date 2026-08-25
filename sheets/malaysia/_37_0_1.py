@@ -63,8 +63,8 @@ def populate_jadual_37_0_1(sheet, hierarchy, report_type):
     print("  -> Populating Jadual 37.0 (Purata Suhu) untuk Malaysia")
 
     # 1. Static Title Injection
-    title_bm = ": Purata suhu, Malaysia, 2022 - 2024"
-    title_en = ": Mean temperature, Malaysia, 2022 - 2024"
+    title_bm = ": Purata suhu, Malaysia, 2022 - 2024 (samb.)"
+    title_en = ": Mean temperature, Malaysia, 2022 - 2024 (cont'd)"
     sheet.range("C2").value = title_bm
     sheet.range("C3").value = title_en
 

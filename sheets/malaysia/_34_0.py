@@ -26,7 +26,7 @@ ROW_MAP = {
 # The order must match the years in YEARS.
 COLUMN_ORDER = [
     5, 6, 7,     # 2023: Total, Bandar, Luar bandar
-    9, 10, 12,   # 2024: Total, Bandar, Luar bandar (column 11 is skipped)
+    9, 10, 11,   # 2024: Total, Bandar, Luar bandar (column 11 is skipped)
     13, 14, 15   # 2025: Total, Bandar, Luar bandar
 ]
 
@@ -51,10 +51,12 @@ def populate_jadual_34(sheet, hierarchy, report_type):
     sheet.range("C1").value = title_bm
     sheet.range("C2").value = title_en
 
-    # Fetch data (Malaysia only)
-    malaysia_data = get_metrics_dict("Malaysia", level="negeri")
+    # ==========================================================
+    # DATA FETCHING – Malaysia data is stored under code "00" as negeri
+    # ==========================================================
+    malaysia_data = get_metrics_dict("00", level="negeri")
     if not malaysia_data:
-        print("     [Warning] No data found for Malaysia.")
+        print("     [Warning] No data found for Malaysia (00).")
         return
 
     # Inject data
@@ -64,7 +66,7 @@ def populate_jadual_34(sheet, hierarchy, report_type):
             year_data = malaysia_data.get(year, {})
             raw_val = year_data.get(metric_name, "n.a")
             val = "n.a"
-            if pd.notna(raw_val) and str(raw_val).strip() not in ("", "n.a", "n.a.", "-"):
+            if pd.notna(raw_val) and str(raw_val).strip() not in ("", "n.a", "n.a."):
                 try:
                     val = float(raw_val)
                 except (ValueError, TypeError):

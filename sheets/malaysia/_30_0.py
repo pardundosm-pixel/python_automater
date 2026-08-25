@@ -4,8 +4,7 @@ from src.data_provider import get_metrics_dict
 # ==========================================
 # MAPPING CONFIGURATION FOR JADUAL 18.0 (Stok Modal)
 # ==========================================
-# TODO: Map the EXCEL ROW NUMBER to the METRIC NAME in the database
-# Example: 7: "jumlah_penduduk", 11: "warganegara"
+# !!! No data for 2024 and 2025
 ROW_MAP = {
     # Sekolah kerajaan & bantuan kerajaan (Government school & government aid)
     10: "bilangan_murid_prasekolah_kerajaan",        # Prasekolah / Pre-school
@@ -34,7 +33,7 @@ def populate_jadual_30_0(sheet, hierarchy, report_type):
     print(f"  -> Populating Jadual 30.0 (Bil Murid) untuk Malaysia_30_0")
     
     # 1. Fetch the Data Payload strictly for Malaysia
-    metrics_data = get_metrics_dict("Malaysia", level='negeri')
+    metrics_data = get_metrics_dict("00", level='negeri')
     
     if not metrics_data:
             print(f"     [Warning] No data found for Malaysia.")
@@ -48,8 +47,8 @@ def populate_jadual_30_0(sheet, hierarchy, report_type):
         
     # Set the exact cells where your title sits in the template
     # Targeting Column C based on standard template behavior
-    sheet.range("C2").value = title_bm
-    sheet.range("C3").value = title_en
+    sheet.range("D2").value = title_bm
+    sheet.range("D3").value = title_en
 
     # Standard Injection Loop
     for col_idx, year in COL_MAP.items():

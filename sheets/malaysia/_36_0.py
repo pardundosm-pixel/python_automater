@@ -58,11 +58,15 @@ def populate_jadual_36_0(sheet, hierarchy, report_type):
     # DYNAMIC TABLE TITLE MODIFICATION
     # ==========================================
     title_bm = f": Statistik Penggunaan Per Kapita, Kadar Sara Diri dan Kadar Kebergantungan Import Item Pertanian,"
-    title_en = f": Statistics of Per Capita Consumption, Self-Sufficiency Ratio and Import Dependency Ratio of Agricultural Items,"
+    title_bm_part2 = f"  Malaysia, 2024"
+    title_en = f": Statistics of Per Capita Consumption, Self-Sufficiency Ratio and Import Dependency Ratio of"
+    title_en_part2 = f"  Agricultural Items, Malaysia, 2024"
 
     # Target the exact cells where your title sits (Adjust if necessary based on your template)
     sheet.range("C3").value = title_bm
+    sheet.range("C4").value = title_bm_part2
     sheet.range("C5").value = title_en
+    sheet.range("C6").value = title_en_part2
     # ==========================================
 
     # 3. Inject Data

@@ -165,8 +165,8 @@ MASTER_REGISTRY = {
         "23.1_Harga_Item_Terpilih": jadual_23_1_malaysia,
         "23.1_Harga_Item_Terpilih_1": jadual_23_1_1_malaysia,
         "24.0_IHPR": jadual_24_0_malaysia,
-        "25.0_Kemalangan_Pekerja": jadual_25_0_malaysia,
-        "25.0_Kemalangan_Pekerja_1": jadual_25_0_1_malaysia,
+        "25.0_Kecederaan_Pekerja": jadual_25_0_malaysia,
+        "25.0_Kecederaan_Pekerja_1": jadual_25_0_1_malaysia,
 
         # ===== 26.0 to 30.0 =====
         "26.0_Peratusan_Ahli_Parlimen": jadual_26_0_malaysia,

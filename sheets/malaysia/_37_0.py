@@ -40,8 +40,8 @@ ROW_MAP = {
     26: ("Gong Kedak", "03", "maksimum_suhu"),
 
     # MELAKA (State Code "04")
-    27: ("Melaka", "04", "minimum_suhu"),
-    28: ("Melaka", "04", "maksimum_suhu"),
+    28: ("Melaka", "04", "minimum_suhu"),
+    29: ("Melaka", "04", "maksimum_suhu"),
 
     # NEGERI SEMBILAN (State Code "05")
     31: ("Kuala Pilah", "05", "minimum_suhu"),

@@ -46,7 +46,7 @@ def populate_jadual_24_0(sheet, hierarchy, report_type):
     # ==========================================
     title_bm  = ": Indeks Harga Pengeluar (IHPR) Pengeluaran Tempatan dan Perubahan Peratus Tahunan mengikut "
     title_bm2 = "  Sektor, Malaysia, 2023 - 2025 "
-    title_en  = ": Average price for selected items, Malaysia, 2023 - 2025"
+    title_en  = ": Producer Price Index (PPI) Local Production and Annual Percentage Change by Sector, Malaysia, "
     title_en2 = "  2023 - 2025"
         
     # Set the exact cells where your title sits in the template

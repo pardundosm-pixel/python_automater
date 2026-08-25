@@ -76,13 +76,13 @@ LOCATIONS = [
 START_ROW = 16
 
 # Build ROW_MAP with Malaysia as the first block, then all states.
-# Malaysia is special: it will be computed by summing all states.
+# Malaysia is special: it will be fetched directly from code "00" (not summed).
 ALL_LOCATIONS = [("Malaysia", "malaysia")] + LOCATIONS
 ROW_MAP = generate_row_map(start_row=START_ROW, locations=ALL_LOCATIONS, years=YEARS, spacing=4)
 
 
 # ============================================================
-# 3. INJECTION ENGINE (with Malaysia sum calculation)
+# 3. INJECTION ENGINE (with direct Malaysia fetch)
 # ============================================================
 def populate_jadual_33(sheet, hierarchy, report_type):
     print("  -> Populating Jadual 33.0 (Bilangan OKU Berdaftar)")
@@ -92,18 +92,21 @@ def populate_jadual_33(sheet, hierarchy, report_type):
     # The year range is automatically generated from the YEARS list.
     # ==========================================================
     # BM title is split across C2 and C3 (as per template)
-    title_bm_part1 = ": Bilangan kumulatif Orang Kurang Upaya (OKU) yang berdaftar mengikut negeri dan kategori"
-    title_bm_part2 = f"ketidakupayaan, Malaysia, {YEARS[0]} - {YEARS[-1]}"
+    title_bm_part1 = ": Bilangan kumulatif Orang Kurang Upaya (OKU) yang berdaftar mengikut negeri dan kategori ketidakupayaan,"
+    title_bm_part2 = f"Malaysia, {YEARS[0]} - {YEARS[-1]}"
     # EN title on C4 (single line)
-    title_en = f": Cumulative number of registered Persons with Disabilities (PWD) cases by state and category of disabilities, Malaysia, {YEARS[0]} - {YEARS[-1]}"
+    title_en = f": Cumulative number of registered Persons with Disabilities (PWD) cases by state and category of disabilities,"
+    title_en2 = f" Malaysia, {YEARS[0]} - {YEARS[-1]}"
 
-    sheet.range("C2").value = title_bm_part1
-    sheet.range("C3").value = title_bm_part2
-    sheet.range("C4").value = title_en
+    sheet.range("C3").value = title_bm_part1
+    sheet.range("C4").value = title_bm_part2
+    sheet.range("C5").value = title_en
+    sheet.range("C6").value = title_en2
 
     # ==========================================================
-    # DATA FETCHING & CACHING (each state once)
+    # DATA FETCHING & CACHING
     # ==========================================================
+    # 1. Fetch data for states (01 to 15)
     state_cache = {}
     for state_code, _ in LOCATIONS:
         state_data = get_metrics_dict(state_code, level="negeri")
@@ -112,27 +115,14 @@ def populate_jadual_33(sheet, hierarchy, report_type):
         else:
             print(f"     [Warning] No data found for state {state_code}.")
 
+    # 2. Fetch Malaysia data separately (code "00")
+    malaysia_data = get_metrics_dict("00", level="negeri")
+    if not malaysia_data:
+        print("     [Warning] No data found for Malaysia (00).")
+
     # ==========================================================
-    # COMPUTE MALAYSIA TOTALS (SUM OF ALL STATES)
-    # If Malaysia data ever becomes available in fact_metrics_malaysia,
-    # you can replace this block with a direct fetch.
-    # CHANGE HERE: To use fact_metrics_malaysia instead, comment out the
-    # summation block and use:
-    # malaysia_data = get_metrics_dict("Malaysia", level="malaysia")
+    # (REMOVED the malaysia_totals summation block)
     # ==========================================================
-    malaysia_totals = {}
-    for year in YEARS:
-        totals = {metric: 0 for metric in COL_MAP.values()}
-        for state_data in state_cache.values():
-            year_data = state_data.get(year, {})
-            for metric in COL_MAP.values():
-                val = year_data.get(metric, 0)
-                if pd.notna(val):
-                    try:
-                        totals[metric] += float(val)
-                    except (ValueError, TypeError):
-                        pass
-        malaysia_totals[year] = totals
 
     # ==========================================================
     # DATA INJECTION INTO EXCEL
@@ -140,19 +130,22 @@ def populate_jadual_33(sheet, hierarchy, report_type):
     for row_idx, (location_code, year, level) in ROW_MAP.items():
         # Choose the correct data source for this row
         if location_code == "Malaysia" and level == "malaysia":
-            year_data = malaysia_totals.get(year, {})
+            # Use the separately fetched "00" data
+            year_data = malaysia_data.get(year, {}) if malaysia_data else {}
         else:
-            # For states, retrieve from the cache
+            # For states (01 to 15)
             state_data = state_cache.get(location_code, {})
             year_data = state_data.get(year, {})
 
         # Fill each metric column for this row
         for col_idx, metric_name in COL_MAP.items():
-            raw_val = year_data.get(metric_name, "n.a")
-            val = "n.a"
-            if pd.notna(raw_val) and str(raw_val).strip() not in ("", "n.a", "n.a.", "-"):
+            val = year_data.get(metric_name, "n.a")   # start with the raw value
+            # Check for missing values exactly as in the original code
+            if pd.notna(val) and val != "n.a" and val != "":
                 try:
-                    val = float(raw_val)
+                    val = float(val)                 # convert if possible
                 except (ValueError, TypeError):
-                    pass
+                    pass                             # keep original on failure
+            else:
+                val = "n.a"                          # explicitly mark missing
             sheet.range((row_idx, col_idx)).value = val
