@@ -115,31 +115,31 @@ MASTER_REGISTRY = {
     # Profile 1: The standard Parlimen & DUN template
     "parlimen_dun": {
         "1.0_Maklumat_Asas": jadual_1,
-        "2.0_Penduduk_Malaysia": jadual_2,
-        "2.1_Penduduk_Negeri": jadual_2_1,
-        "2.2_Penduduk_Parlimen": jadual_2_2,
-        "2.3_Penduduk": jadual_2_3,
-        "3.0_Perumahan": jadual_3,
-        "4.0_Guna_Tenaga": jadual_4,
-        "5.0_Pendapatan": jadual_5,
-        "6.0_Pendidikan_SK": jadual_6,
-        "6.1_Pendidikan_Swasta": jadual_6_1,
-        "7.0_Kesihatan": jadual_7,
-        "8.0_Jantina": jadual_8,
-        "8.1_Etnik": jadual_8_1,
-        "8.2_Agama": jadual_8_2,
-        "8.3_Umur": jadual_8_3,
-        "9.0_Keselamatan_Awam": jadual_9,
-        "10.0_IMS": jadual_10,
-        "11.0_Air_Elektrik_Sampah": jadual_11,
-        "12.0_Pertubuhan": jadual_12,
-        "12.1_Prtubuhn_Perkhdmtn": jadual_12_1,
-        "12.1_Prtubuhn_Perkhdmtn_(samb.)": jadual_12_1_1,
-        "12.2_Kemudahan_Asas": jadual_12_2,
-        "13.0_Fasiliti_awam": jadual_13,
-        "13.0_Fasiliti_awam_samb": jadual_13_0_1,
-        "13.1_Statistik_Perkhid._lain": jadual_13_1,
-        "13.2_Koperasi": jadual_13_2
+        # "2.0_Penduduk_Malaysia": jadual_2,
+        # "2.1_Penduduk_Negeri": jadual_2_1,
+        # "2.2_Penduduk_Parlimen": jadual_2_2,
+        # "2.3_Penduduk": jadual_2_3,
+        # "3.0_Perumahan": jadual_3,
+        # "4.0_Guna_Tenaga": jadual_4,
+        # "5.0_Pendapatan": jadual_5,
+        # "6.0_Pendidikan_SK": jadual_6,
+        # "6.1_Pendidikan_Swasta": jadual_6_1,
+        # "7.0_Kesihatan": jadual_7,
+        # "8.0_Jantina": jadual_8,
+        # "8.1_Etnik": jadual_8_1,
+        # "8.2_Agama": jadual_8_2,
+        # "8.3_Umur": jadual_8_3,
+        # "9.0_Keselamatan_Awam": jadual_9,
+        # "10.0_IMS": jadual_10,
+        # "11.0_Air_Elektrik_Sampah": jadual_11,
+        # "12.0_Pertubuhan": jadual_12,
+        # "12.1_Prtubuhn_Perkhdmtn": jadual_12_1,
+        # "12.1_Prtubuhn_Perkhdmtn_(samb.)": jadual_12_1_1,
+        # "12.2_Kemudahan_Asas": jadual_12_2,
+        # "13.0_Fasiliti_awam": jadual_13,
+        # "13.0_Fasiliti_awam_samb": jadual_13_0_1,
+        # "13.1_Statistik_Perkhid._lain": jadual_13_1,
+        # "13.2_Koperasi": jadual_13_2
     },
     
     # Profile 2: Malaysia
@@ -271,15 +271,31 @@ def generate_report(location_code: str, report_type: str, excel_app: xw.App, par
         sorted_prefixes = sorted(active_mappers.keys(), key=len, reverse=True)
         
         # --- D. DYNAMIC ROUTING ---
+        populated_sheets = set() # NEW: Keep track of injected sheets
+    
         for sheet in wb.sheets:
             sheet_name_clean = str(sheet.name).strip()
             for prefix in sorted_prefixes:
                 if sheet_name_clean.startswith(prefix):
                     mapper_function = active_mappers[prefix]
                     mapper_function(sheet, hierarchy, report_type)
-                    break 
+                    
+                    # Mark this sheet as successfully populated
+                    populated_sheets.add(sheet.name)
+                    break
 
-        # --- E. CONSTRUCT OUTPUT DIRECTORY & SAVE LOGIC ---
+        # --- E. UNUSED SHEET PURGING ---
+        print(f"  -> Purging {len(wb.sheets) - len(populated_sheets)} unused sheets...")
+        
+        # Identify the NAMES of sheets that were NOT in our populated list
+        sheets_to_delete = [sheet.name for sheet in wb.sheets if sheet.name not in populated_sheets]
+        
+        # Safety Check: Guarantee we don't delete every single sheet and crash Excel
+        if len(wb.sheets) > len(sheets_to_delete):
+            for sheet_name in sheets_to_delete:
+                wb.sheets[sheet_name].delete()  # Delete safely by name instead of object reference
+
+        # --- F. CONSTRUCT OUTPUT DIRECTORY & SAVE LOGIC ---
         state_name = str(hierarchy.get('state_name', 'Unknown_State')).strip()
         safe_state_name = state_name.replace('/', '_').replace('\\', '_')
         state_code = str(hierarchy.get('state_code', '00')).strip().zfill(2)

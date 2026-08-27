@@ -6,7 +6,7 @@ from src.data_loader import db
 # CONFIGURATION
 # ==========================================
 TEST_MODE = True
-TARGET_TEMPLATE = "malaysia"  # Options: "malaysia", "negeri", or "parlimen_dun"
+TARGET_TEMPLATE = "parlimen_dun"  # Options: "malaysia", "negeri", or "parlimen_dun"
 TARGET_STATE = "01"
 TARGET_PARLIMEN = "P.143"
 TARGET_DUN = "N.07"

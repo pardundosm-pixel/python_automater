@@ -1,7 +1,9 @@
-# data_provider.py (added logging prints)
+# data_provider.py (with query caching)
 import pandas as pd
+from functools import lru_cache
 from src.data_loader import db
 
+@lru_cache(maxsize=128)
 def get_location_hierarchy(parlimen_code: str):
     """Fetches Parliament details and its nested DUNs from dim_geografi."""
     print(f"[DATA] Fetching location hierarchy for parl_code: {parlimen_code}")
@@ -31,6 +33,7 @@ def get_location_hierarchy(parlimen_code: str):
         'duns': duns
     }
 
+@lru_cache(maxsize=256)
 def get_metrics_dict(location_code: str, level: str, parent_code: str = None):
     """
     Fetches metrics for a location and formats them into a nested dictionary by year.
@@ -190,6 +193,7 @@ def get_metrics_dict(location_code: str, level: str, parent_code: str = None):
     print(f"[DATA] Retrieved metrics for {len(metrics_by_year)} year(s) for {location_code}")
     return metrics_by_year
 
+@lru_cache(maxsize=128)
 def get_dun_hierarchy(dun_code: str, parent_parl_code: str = None):
     """Fetches DUN details and its parent Parliament safely using strict matching."""
     print(f"[DATA] Fetching DUN hierarchy for dun_code: {dun_code}, parent_parl_code: {parent_parl_code}")
@@ -218,6 +222,7 @@ def get_dun_hierarchy(dun_code: str, parent_parl_code: str = None):
     print(f"[DATA] Found DUN: {result['dun_name']} under {result['parent_parl_name']}")
     return result
 
+@lru_cache(maxsize=64)
 def get_negeri_hierarchy(state_code: str):
     """Fetches State details and its nested Districts from the dim_daerah sheet."""
     print(f"[DATA] Fetching location hierarchy for state_code: {state_code}")
@@ -260,6 +265,8 @@ def get_negeri_hierarchy(state_code: str):
         'districts': districts
     }
 
+# The following functions are not cached in the provided example, but you may add caching if needed.
+# For consistency with the example, we leave them as is.
 def get_pdrm_hierarchy(state_code: str):
     """Fetches unique Police Districts (Daerah PDRM) for a given state from the isolated dim_daerah_pdrm table."""
     print(f"[DATA] Fetching PDRM hierarchy for state_code: {state_code}")

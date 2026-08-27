@@ -228,88 +228,43 @@ def populate_jadual_6_1(sheet, hierarchy, report_type):
         # Erase Data Rows underneath
         sheet.range((target_row + 1, start_col), (MAX_ROW_TO_CLEAN, actual_start_col - 1)).value = None
 
-    # 5. Inject Data Flush-Right
-    current_col = actual_start_col
-    for loc_code, loc_name, metrics_data in locations_to_inject:
+    # 5. Inject Data Flush-Right (VECTORIZED)
+        headers = []
+        bold_indices = []
+    
+        # --- A. Prepare and Inject Headers in One Call ---
+        for i, (loc_code, loc_name, metrics_data) in enumerate(locations_to_inject):
+            headers.append(f"{loc_code}\n{loc_name}")
+            
+            # Track which columns belong to a Parliament to bold them later
+            if loc_code == hierarchy.get('parl_code') or loc_code == hierarchy.get('parent_parl_code'):
+                bold_indices.append(i)
+    
+        # Inject the entire header row at once
+        sheet.range((target_row, actual_start_col)).value = headers
         
-        # ==========================================
-        # PRE-CALCULATION BLOCK (JADUAL 6.1)
-        # ==========================================
-        for year_str, year_data in metrics_data.items():
-            # --- 1. KIRAAN SEKOLAH ---
-            # Sekolah Rendah = Akademik + Agama
-            sr_aka = year_data.get('sekolah_rendah_akademik', 'n.a')
-            sr_aga = year_data.get('sekolah_rendah_agama', 'n.a')
-            var_srk = safe_add(sr_aka, sr_aga)
-            year_data['sekolah_rendah'] = var_srk
-
-            # Sekolah Menengah = Akademik + Agama + Cina
-            sm_aka = year_data.get('sekolah_menengah_akademik', 'n.a')
-            sm_aga = year_data.get('sekolah_menengah_agama', 'n.a')
-            sm_cin = year_data.get('sekolah_menengah_cina', 'n.a')
-            var_smk = safe_add(sm_aka, sm_aga, sm_cin)
-            year_data['sekolah_menengah'] = var_smk
-
-            # Jumlah Sekolah = Sekolah Rendah + Sekolah Menengah
-            year_data['bilangan_sekolah'] = safe_add(var_srk, var_smk)
-
-            # --- 2. KIRAAN GURU ---
-            # Guru Sekolah Rendah = Akademik + Agama
-            gr_aka = year_data.get('guru_sekolah_rendah_akademik', 'n.a')
-            gr_aga = year_data.get('guru_sekolah_rendah_agama', 'n.a')
-            var_srk_guru = safe_add(gr_aka, gr_aga)
-            year_data['bilangan_guru_sekolah_rendah'] = var_srk_guru
-
-            # Guru Sekolah Menengah = Akademik + Agama + Cina
-            gm_aka = year_data.get('guru_sekolah_menengah_akademik', 'n.a')
-            gm_aga = year_data.get('guru_sekolah_menengah_agama', 'n.a')
-            gm_cin = year_data.get('guru_sekolah_menengah_cina', 'n.a')
-            var_smk_guru = safe_add(gm_aka, gm_aga, gm_cin)
-            year_data['bilangan_guru_sekolah_menengah'] = var_smk_guru
-
-            # Jumlah Guru = Guru SR + Guru SM
-            year_data['bilangan_guru'] = safe_add(var_srk_guru, var_smk_guru)
-
-            # --- 3. KIRAAN MURID ---
-            # Murid Sekolah Rendah = Akademik + Agama
-            mr_aka = year_data.get('murid_sekolah_rendah_akademik', 'n.a')
-            mr_aga = year_data.get('murid_sekolah_rendah_agama', 'n.a')
-            var_srk_murid = safe_add(mr_aka, mr_aga)
-            year_data['bilangan_murid_sekolah_rendah'] = var_srk_murid
-
-            # Murid Sekolah Menengah = Akademik + Agama + Cina
-            mm_aka = year_data.get('murid_sekolah_menengah_akademik', 'n.a')
-            mm_aga = year_data.get('murid_sekolah_menengah_agama', 'n.a')
-            mm_cin = year_data.get('murid_sekolah_menengah_cina', 'n.a')
-            var_smk_murid = safe_add(mm_aka, mm_aga, mm_cin)
-            year_data['bilangan_murid_sekolah_menengah'] = var_smk_murid
-
-            # Jumlah Murid = Murid SR + Murid SM
-            year_data['bilangan_murid'] = safe_add(var_srk_murid, var_smk_murid)
-        # ==========================================
-        
-        # Write Column Header dynamically
-        header_cell = sheet.range((target_row, current_col))
-        header_cell.value = f"{loc_code}\n{loc_name}"
-        
-        # BOLD PARLIAMENT HEADERS 
-        # Check if the current column belongs to the Parliament. If yes, make it bold.
-        is_parliament = (loc_code == hierarchy.get('parl_code') or loc_code == hierarchy.get('parent_parl_code'))
-        header_cell.font.bold = is_parliament
-        
-        # Inject Mapped Rows
+        # Apply bold styling only to Parliament headers
+        for i in bold_indices:
+            sheet.range((target_row, actual_start_col + i)).font.bold = True
+    
+        # --- B. Prepare and Inject Data Rows in One Call Per Row ---
         for row_idx, (metric_name, year) in ROW_MAP.items():
-            year_data = metrics_data.get(str(year), {})
-            val = year_data.get(metric_name, "n.a")
+            row_payload = []
             
-            if pd.notna(val) and val != "n.a" and val != "":
-                try: 
-                    val = float(val)
-                except (ValueError, TypeError): 
-                    pass
-            else:
-                val = "n.a"
+            # Build the horizontal list for this specific metric
+            for loc_code, loc_name, metrics_data in locations_to_inject:
+                year_data = metrics_data.get(str(year), {})
+                val = year_data.get(metric_name, "n.a")
                 
-            sheet.range((row_idx, current_col)).value = val
-            
-        current_col += 1
+                if pd.notna(val) and val != "n.a" and val != "":
+                    try: 
+                        val = float(val)
+                    except (ValueError, TypeError): 
+                        pass
+                else:
+                    val = "n.a"
+                    
+                row_payload.append(val)
+                
+            # 🚀 INJECT THE ENTIRE ROW ACROSS ALL COLUMNS IN 1 COM CALL
+            sheet.range((row_idx, actual_start_col)).value = row_payload
