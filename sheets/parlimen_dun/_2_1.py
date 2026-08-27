@@ -1,4 +1,5 @@
 import pandas as pd
+from src.excel_utils import get_dynamic_boundaries, inject_dynamic_table, inject_static_table
 from src.data_provider import get_metrics_dict
 
 # ==========================================
@@ -38,49 +39,11 @@ COL_MAP = {
     6: "2026p"   
 }
 
-# ==========================================
-# 2. REPORT INJECTION ENGINE
-# ==========================================
-# TODO: Rename the function to match the specific jadual (e.g., populate_jadual_2_2)
 def populate_jadual_2_1(sheet, hierarchy, report_type):
-    # Even though the report is running for P.143, Jadual 2.1 is ALWAYS Malaysia data
-    print(f"  -> Populating Jadual 2.1 (Negeri) for {hierarchy['state_name']}")
+    metrics_data = get_metrics_dict(hierarchy['state_code'], level='negeri')
+    if not metrics_data: return
 
-    # 1. Fetch the Data Payload strictly for Malaysia
-    metrics_data = get_metrics_dict("Malaysia", level='negeri')
+    sheet["C2"] = f": Anggaran penduduk pertengahan tahun, {hierarchy['state_name']}, 2024 - 2026p"
+    sheet["C3"] = f": Mid-year population estimates, {hierarchy['state_name']}, 2024 - 2026p"
     
-    if not metrics_data:
-        print(f"     [Warning] No data found for Negeri.")
-        return
-
-    # ==========================================
-    # DYNAMIC TABLE TITLE MODIFICATION
-    # ==========================================
-    title_bm = f": Anggaran penduduk pertengahan tahun, {hierarchy['state_name']}, 2024 - 2026p"
-    title_en = f": Mid-year population estimates, {hierarchy['state_name']}, 2024 - 2026p"
-
-    # Set the exact cells where your title sits in the template
-    sheet.range("C2").value = title_bm
-    sheet.range("C3").value = title_en
-    # ==========================================
-
-    # 2. Inject Data
-    # Loop over the columns (Years) first
-    for col_idx, year in COL_MAP.items():
-        year_data = metrics_data.get(str(year), {})
-        
-        # --- THE FIX IS HERE ---
-        # We only unpack row_idx and metric_name (no year tuple!)
-        for row_idx, metric_name in ROW_MAP.items():
-            val = year_data.get(metric_name, "n.a")
-            
-            # Clean and parse missing values
-            if pd.notna(val) and val != "n.a" and val != "":
-                try: 
-                    val = float(val)
-                except (ValueError, TypeError): 
-                    pass
-            else:
-                val = "n.a"
-                
-            sheet.range((row_idx, col_idx)).value = val
+    inject_static_table(sheet, metrics_data, ROW_MAP, COL_MAP)

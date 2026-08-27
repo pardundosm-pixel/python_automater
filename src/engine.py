@@ -1,5 +1,5 @@
 import os
-import xlwings as xw
+import openpyxl
 from config.settings import TEMPLATE_PATHS, OUTPUT_DIR
 from src.data_provider import get_location_hierarchy, get_dun_hierarchy, get_negeri_hierarchy
 
@@ -88,9 +88,7 @@ from sheets.malaysia._41_0 import populate_jadual_41 as jadual_41_0_malaysia
 # (Negeri Template Mappers)
 from sheets.negeri._42_1 import populate_jadual_42_1 as jadual_42_1_negeri
 from sheets.negeri._43_0 import populate_jadual_43 as jadual_43_negeri
-from sheets.negeri._42_1 import populate_jadual_42_1 as jadual_42_1_negeri
 from sheets.negeri._42_0 import populate_jadual_42 as jadual_42_0_negeri
-from sheets.negeri._43_0 import populate_jadual_43 as jadual_43_negeri
 from sheets.negeri._44_0 import populate_jadual_44_0 as jadual_44_negeri
 from sheets.negeri._45_0 import populate_jadual_45_0 as jadual_45_0_negeri
 from sheets.negeri._45_0_1 import populate_jadual_45_0_1 as jadual_45_0_1_negeri
@@ -115,31 +113,31 @@ MASTER_REGISTRY = {
     # Profile 1: The standard Parlimen & DUN template
     "parlimen_dun": {
         "1.0_Maklumat_Asas": jadual_1,
-        # "2.0_Penduduk_Malaysia": jadual_2,
-        # "2.1_Penduduk_Negeri": jadual_2_1,
-        # "2.2_Penduduk_Parlimen": jadual_2_2,
-        # "2.3_Penduduk": jadual_2_3,
-        # "3.0_Perumahan": jadual_3,
-        # "4.0_Guna_Tenaga": jadual_4,
-        # "5.0_Pendapatan": jadual_5,
-        # "6.0_Pendidikan_SK": jadual_6,
-        # "6.1_Pendidikan_Swasta": jadual_6_1,
-        # "7.0_Kesihatan": jadual_7,
-        # "8.0_Jantina": jadual_8,
-        # "8.1_Etnik": jadual_8_1,
-        # "8.2_Agama": jadual_8_2,
-        # "8.3_Umur": jadual_8_3,
-        # "9.0_Keselamatan_Awam": jadual_9,
-        # "10.0_IMS": jadual_10,
-        # "11.0_Air_Elektrik_Sampah": jadual_11,
-        # "12.0_Pertubuhan": jadual_12,
-        # "12.1_Prtubuhn_Perkhdmtn": jadual_12_1,
-        # "12.1_Prtubuhn_Perkhdmtn_(samb.)": jadual_12_1_1,
-        # "12.2_Kemudahan_Asas": jadual_12_2,
-        # "13.0_Fasiliti_awam": jadual_13,
-        # "13.0_Fasiliti_awam_samb": jadual_13_0_1,
-        # "13.1_Statistik_Perkhid._lain": jadual_13_1,
-        # "13.2_Koperasi": jadual_13_2
+        "2.0_Penduduk_Malaysia": jadual_2,
+        "2.1_Penduduk_Negeri": jadual_2_1,
+        "2.2_Penduduk_Parlimen": jadual_2_2,
+        "2.3_Penduduk": jadual_2_3,
+        "3.0_Perumahan": jadual_3,
+        "4.0_Guna_Tenaga": jadual_4,
+        "5.0_Pendapatan": jadual_5,
+        "6.0_Pendidikan_SK": jadual_6,
+        "6.1_Pendidikan_Swasta": jadual_6_1,
+        "7.0_Kesihatan": jadual_7,
+        "8.0_Jantina": jadual_8,
+        "8.1_Etnik": jadual_8_1,
+        "8.2_Agama": jadual_8_2,
+        "8.3_Umur": jadual_8_3,
+        "9.0_Keselamatan_Awam": jadual_9,
+        "10.0_IMS": jadual_10,
+        "11.0_Air_Elektrik_Sampah": jadual_11,
+        "12.0_Pertubuhan": jadual_12,
+        "12.1_Prtubuhn_Perkhdmtn": jadual_12_1,
+        "12.1_Prtubuhn_Perkhdmtn_(samb.)": jadual_12_1_1,
+        "12.2_Kemudahan_Asas": jadual_12_2,
+        "13.0_Fasiliti_awam": jadual_13,
+        "13.0_Fasiliti_awam_samb": jadual_13_0_1,
+        "13.1_Statistik_Perkhid._lain": jadual_13_1,
+        "13.2_Koperasi": jadual_13_2
     },
     
     # Profile 2: Malaysia
@@ -179,7 +177,7 @@ MASTER_REGISTRY = {
         "31.0_Jenayah_kekerasan": jadual_31_0_malaysia,
         "31.1_Jenayah_harta_benda": jadual_31_1_malaysia,
         "32.0_Kemalangan_Jalan_Raya": jadual_32_0_malaysia,
-        "33.0 Oku_kumulatif": jadual_33_0_malaysia,          # note the space
+        "33.0 Oku_kumulatif": jadual_33_0_malaysia,
         "34.0_Capaian_ICT_Isi_Rumh": jadual_34_0_malaysia,
         "35.0_Pendpatn_Perbelanjaan": jadual_35_0_malaysia,
 
@@ -200,14 +198,14 @@ MASTER_REGISTRY = {
         "39_0_Kelembapan_1": jadual_39_0_1_malaysia,
 
         # ===== 40.0 to 41.0 =====
-        "40.0_Kes_COVID 19": jadual_40_0_malaysia,           # note the space
+        "40.0_Kes_COVID 19": jadual_40_0_malaysia,
         "40.1_Penerima_Vaksin_Malaysia": jadual_40_1_malaysia,
         "41.0_Agihan_Zakat": jadual_41_0_malaysia,
     },
     
     # Profile 3: Negeri
     "negeri": {
-        "42.0_KDNK":jadual_42_0_negeri,
+        "42.0_KDNK": jadual_42_0_negeri,
         "42.1_KDNK_DP": jadual_42_1_negeri,
         "43.0_Dagangan": jadual_43_negeri,
         "44.0_Pelancongan": jadual_44_negeri,
@@ -233,7 +231,7 @@ MASTER_REGISTRY = {
 # ==========================================
 # 3. REPORT ORCHESTRATOR
 # ==========================================
-def generate_report(location_code: str, report_type: str, excel_app: xw.App, parent_code: str = None, template_key: str = "parlimen_dun"):
+def generate_report(location_code: str, report_type: str, parent_code: str = None, template_key: str = "parlimen_dun"):
     print(f"\n=============================================")
     print(f"Generating {report_type.upper()} Report [{template_key}] for: {location_code}")
     
@@ -243,7 +241,7 @@ def generate_report(location_code: str, report_type: str, excel_app: xw.App, par
     elif report_type == 'dun':
         hierarchy = get_dun_hierarchy(location_code, parent_code)
     elif report_type == 'negeri':
-        hierarchy = get_negeri_hierarchy(location_code)  # <--- NEW: FETCH NEGERI DATA
+        hierarchy = get_negeri_hierarchy(location_code)
     elif report_type == 'malaysia':
         hierarchy = {'state_name': 'Malaysia', 'location_name': 'Malaysia', 'state_code': '00'}
     else:
@@ -254,14 +252,15 @@ def generate_report(location_code: str, report_type: str, excel_app: xw.App, par
         print(f"  -> [Error] Could not find {location_code} in the dimension table.")
         return
 
+    wb = None
     try:
-        # --- B. OPEN THE CORRECT TEMPLATE ---
+        # --- B. OPEN THE CORRECT TEMPLATE WITH OPENPYXL ---
         target_template_path = TEMPLATE_PATHS.get(template_key)
         if not target_template_path:
             print(f"  -> [Error] Template key '{template_key}' not found in settings.py TEMPLATE_PATHS.")
             return
             
-        wb = excel_app.books.open(target_template_path)
+        wb = openpyxl.load_workbook(target_template_path)
         
         # --- C. GET THE CORRECT MAPPERS FOR THIS TEMPLATE ---
         active_mappers = MASTER_REGISTRY.get(template_key, {})
@@ -271,29 +270,28 @@ def generate_report(location_code: str, report_type: str, excel_app: xw.App, par
         sorted_prefixes = sorted(active_mappers.keys(), key=len, reverse=True)
         
         # --- D. DYNAMIC ROUTING ---
-        populated_sheets = set() # NEW: Keep track of injected sheets
+        populated_sheets = set()
     
-        for sheet in wb.sheets:
-            sheet_name_clean = str(sheet.name).strip()
+        for sheet in wb.worksheets:
+            sheet_name_clean = str(sheet.title).strip()
             for prefix in sorted_prefixes:
                 if sheet_name_clean.startswith(prefix):
                     mapper_function = active_mappers[prefix]
                     mapper_function(sheet, hierarchy, report_type)
                     
                     # Mark this sheet as successfully populated
-                    populated_sheets.add(sheet.name)
+                    populated_sheets.add(sheet.title)
                     break
 
-        # --- E. UNUSED SHEET PURGING ---
-        print(f"  -> Purging {len(wb.sheets) - len(populated_sheets)} unused sheets...")
+        # --- E. UNUSED SHEET PURGING (OPENPYXL SYNTAX) ---
+        print(f"  -> Purging {len(wb.worksheets) - len(populated_sheets)} unused sheets...")
         
-        # Identify the NAMES of sheets that were NOT in our populated list
-        sheets_to_delete = [sheet.name for sheet in wb.sheets if sheet.name not in populated_sheets]
+        sheets_to_delete = [sheet.title for sheet in wb.worksheets if sheet.title not in populated_sheets]
         
-        # Safety Check: Guarantee we don't delete every single sheet and crash Excel
-        if len(wb.sheets) > len(sheets_to_delete):
+        # Safety Check: Guarantee we don't delete every single sheet
+        if len(wb.worksheets) > len(sheets_to_delete):
             for sheet_name in sheets_to_delete:
-                wb.sheets[sheet_name].delete()  # Delete safely by name instead of object reference
+                del wb[sheet_name]
 
         # --- F. CONSTRUCT OUTPUT DIRECTORY & SAVE LOGIC ---
         state_name = str(hierarchy.get('state_name', 'Unknown_State')).strip()
@@ -316,33 +314,25 @@ def generate_report(location_code: str, report_type: str, excel_app: xw.App, par
         if report_type == 'parlimen':
             parl_code = str(hierarchy.get('parl_code', '')).strip()
             parl_name = str(hierarchy.get('parl_name', '')).strip()
-            
-            # e.g., output/Jadual 1 - 13 (Parlimen & DUN)/Johor/Parlimen/P.143 Pagoh.xlsx
             target_dir = os.path.join(category_folder, safe_state_name, "Parlimen")
             file_name = f"{parl_code} {parl_name}.xlsx"
             
         elif report_type == 'dun':
             dun_code = str(hierarchy.get('dun_code', '')).strip()
             dun_name = str(hierarchy.get('dun_name', '')).strip()
-            
-            # e.g., output/Jadual 1 - 13 (Parlimen & DUN)/Johor/DUN/01_N.07 Bukit Kepong.xlsx
             target_dir = os.path.join(category_folder, safe_state_name, "DUN")
             file_name = f"{state_code}_{dun_code} {dun_name}.xlsx"
             
         elif report_type == 'negeri':
-            # e.g., output/Jadual Negeri/Jadual_42_56_Johor.xlsx
             target_dir = category_folder
             file_name = f"Jadual_42_56_{safe_state_name}.xlsx"
             
         elif report_type == 'malaysia':
-            # e.g., output/Jadual Malaysia/Jadual_14_41_Malaysia.xlsx
             target_dir = category_folder
             file_name = "Jadual_14_41_Malaysia.xlsx"
         
         # 3. Create the directory safely
         os.makedirs(target_dir, exist_ok=True)
-        
-        # Use realpath to resolve any Mac iCloud symlinks before giving it to AppleScript!
         save_path = os.path.realpath(os.path.join(target_dir, file_name))
         
         # --- Save Report and Close Workbook ---
@@ -352,7 +342,8 @@ def generate_report(location_code: str, report_type: str, excel_app: xw.App, par
 
     except Exception as e:
         print(f"  -> [Critical Error]: {e}")
-        try:
-            wb.close()
-        except:
-            pass
+        if wb:
+            try:
+                wb.close()
+            except Exception:
+                pass

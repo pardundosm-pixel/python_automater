@@ -1,4 +1,5 @@
 import pandas as pd
+from src.excel_utils import get_dynamic_boundaries, inject_dynamic_table, inject_static_table
 from src.data_provider import get_metrics_dict
 
 # ==========================================
@@ -35,50 +36,14 @@ COL_MAP = {
     7: "2025",
 }
 
-# ==========================================
-# 2. REPORT INJECTION ENGINE
-# ==========================================
 def populate_jadual_2_2(sheet, hierarchy, report_type):
-    # Safely get the location name for the debug print
-    loc_name_debug = hierarchy.get('parl_code') or hierarchy.get('dun_code')
-    print(f"  -> Populating Jadual 2.2 (Parlimen) for {loc_name_debug}")
-
-    # 1. Fetch the Data Payload
-    # We use `.get() or .get()` so it works flawlessly for BOTH Parlimen and DUN reports
     target_code = hierarchy.get('parl_code') or hierarchy.get('parent_parl_code')
     metrics_data = get_metrics_dict(target_code, level='parlimen')
-    
-    if not metrics_data:
-        print(f"     [Warning] No data found for Parliament {target_code}.")
-        return
+    if not metrics_data: return
 
-    # ==========================================
-    # DYNAMIC TABLE TITLE MODIFICATION
-    # ==========================================
-    # Safely grab the parliament name for the title
     parl_name = hierarchy.get('parl_name') or hierarchy.get('parent_parl_name')
     
-    # Because this is Jadual 2.2, the title ALWAYS says "Parlimen", even in a DUN report
-    title_bm = f": Anggaran penduduk pertengahan tahun, Parlimen {parl_name}, {hierarchy.get('state_name')}, 2024 - 2025"
-    title_en = f": Mid-year population estimates, Parliament of {parl_name}, {hierarchy.get('state_name')}, 2024 - 2025"
-
-    sheet.range("C3").value = title_bm
-    sheet.range("C4").value = title_en
-    # ==========================================
-
-    # 2. Inject Data
-    for col_idx, year in COL_MAP.items():
-        year_data = metrics_data.get(str(year), {})
-        
-        for row_idx, metric_name in ROW_MAP.items():
-            val = year_data.get(metric_name, "n.a")
-            
-            if pd.notna(val) and val != "n.a" and val != "":
-                try: 
-                    val = float(val)
-                except (ValueError, TypeError): 
-                    pass
-            else:
-                val = "n.a"
-                
-            sheet.range((row_idx, col_idx)).value = val
+    sheet["C3"] = f": Anggaran penduduk pertengahan tahun, Parlimen {parl_name}, {hierarchy.get('state_name')}, 2024 - 2025"
+    sheet["C4"] = f": Mid-year population estimates, Parliament of {parl_name}, {hierarchy.get('state_name')}, 2024 - 2025"
+    
+    inject_static_table(sheet, metrics_data, ROW_MAP, COL_MAP)
