@@ -1,5 +1,6 @@
 import pandas as pd
 from src.data_provider import get_metrics_dict
+from src.excel_utils import safe_write
 
 COL_MAP = {
     8: "2022",
@@ -43,8 +44,8 @@ ROW_MAP = {
 def populate_jadual_37_0_2(sheet, hierarchy, report_type):
     print("  -> Populating Jadual 37.0 (Purata Suhu) untuk Malaysia")
 
-    sheet.range("C2").value = ": Purata suhu, Malaysia, 2022 - 2024 (samb.)"
-    sheet.range("C3").value = ": Mean temperature, Malaysia, 2022 - 2024 (cont'd)"
+    sheet["C2"] = ": Purata suhu, Malaysia, 2022 - 2024 (samb.)"
+    sheet["C3"] = ": Mean temperature, Malaysia, 2022 - 2024 (cont'd)"
 
     data_cache = {}
 
@@ -52,11 +53,7 @@ def populate_jadual_37_0_2(sheet, hierarchy, report_type):
         cache_key = f"{station_name}_{state_code}"
 
         if cache_key not in data_cache:
-            data_cache[cache_key] = get_metrics_dict(
-                location_code=station_name,
-                level='meteorologi',
-                parent_code=state_code
-            )
+            data_cache[cache_key] = get_metrics_dict(location_code=station_name, level='meteorologi', parent_code=state_code)
             if not data_cache[cache_key]:
                 print(f"     [⚠️] No data at all for station: '{station_name}' in state {state_code}.")
             else:
@@ -68,39 +65,34 @@ def populate_jadual_37_0_2(sheet, hierarchy, report_type):
         for col_idx, year in COL_MAP.items():
             year_data = station_data.get(str(year), {})
 
-            # ---- DEBUG: print keys for Keningau 2022 ----
             if station_name == "Keningau" and year == "2022":
                 print(f"   [DEBUG] Keys in year_data for Keningau 2022: {list(year_data.keys())}")
 
-            # ---- Try to get value with extensive fallback ----
-            val = "n.a"
-
-            # List of possible metric names (in order of preference)
+            raw_val = "n.a"
             possible_names = [
-                metric_name,                                 # original: "minimum_suhu"
+                metric_name,                                 
                 metric_name.replace("minimum", "min").replace("maksimum", "max"),
                 metric_name.replace("minimum", "rendah").replace("maksimum", "tinggi"),
-                f"suhu_{metric_name.split('_')[-1]}",        # e.g., "suhu_min"
-                f"{metric_name.split('_')[-1]}_suhu",        # e.g., "min_suhu"
-                metric_name.replace("_suhu", ""),            # "minimum" or "maksimum"
+                f"suhu_{metric_name.split('_')[-1]}",        
+                f"{metric_name.split('_')[-1]}_suhu",        
+                metric_name.replace("_suhu", ""),            
                 "min_temp" if "minimum" in metric_name else "max_temp",
                 "suhu_minimum" if "minimum" in metric_name else "suhu_maksimum",
             ]
 
             for alt in possible_names:
                 if alt in year_data:
-                    val = year_data[alt]
-                    if alt != metric_name:  # only print if using alternative
+                    raw_val = year_data[alt]
+                    if alt != metric_name:
                         print(f"     [INFO] Using alternative metric '{alt}' for {station_name} in {year}")
                     break
 
-            # Clean and parse
-            if pd.notna(val) and val != "n.a" and val != "":
+            if pd.notna(raw_val) and str(raw_val).strip() not in ["", "n.a", "n.a.", "nan", "NaN"]:
                 try:
-                    val = float(val)
+                    val = float(raw_val)
                 except (ValueError, TypeError):
-                    pass
+                    val = raw_val
             else:
                 val = "n.a"
 
-            sheet.range((row_idx, col_idx)).value = val
+            safe_write(sheet, row_idx, col_idx, val)

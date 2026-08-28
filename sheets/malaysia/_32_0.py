@@ -1,5 +1,5 @@
-import pandas as pd
 from src.data_provider import get_metrics_dict
+from src.excel_utils import safe_write
 
 # ============================================================
 # 1. SHARED CONFIGURATION (used by multiple tables)
@@ -74,26 +74,15 @@ ROW_MAP = generate_row_map(start_row=START_ROW, locations=ALL_LOCATIONS, years=Y
 
 
 # ============================================================
-# 3. INJECTION ENGINE
+# 3. INJECTION ENGINE 
 # ============================================================
 def populate_jadual_32(sheet, hierarchy, report_type):
     print("  -> Populating Jadual 32.0 (Kemalangan Jalan Raya)")
 
-    # ==========================================================
-    # TITLE CONFIGURATION
-    # ==========================================================
-    title_bm_part1 = ": Bilangan kemalangan jalan raya, kecederaan dan kematian yang dilaporkan mengikut"
-    title_bm_part2 = f"negeri, Malaysia, {YEARS[0]} - {YEARS[-1]}"
-    title_en = f": Number of road accidents, injuries and deaths reported by state, Malaysia, {YEARS[0]} - {YEARS[-1]}"
+    sheet["C2"] = ": Bilangan kemalangan jalan raya, kecederaan dan kematian yang dilaporkan mengikut"
+    sheet["C3"] = f"negeri, Malaysia, {YEARS[0]} - {YEARS[-1]}"
+    sheet["C4"] = f": Number of road accidents, injuries and deaths reported by state, Malaysia, {YEARS[0]} - {YEARS[-1]}"
 
-    sheet.range("C2").value = title_bm_part1
-    sheet.range("C3").value = title_bm_part2
-    sheet.range("C4").value = title_en
-
-    # ==========================================================
-    # DATA FETCHING & CACHING
-    # ==========================================================
-    # 1. Fetch data for states (01 to 16)
     state_cache = {}
     for state_code, _ in LOCATIONS:
         state_data = get_metrics_dict(state_code, level="negeri")
@@ -102,42 +91,29 @@ def populate_jadual_32(sheet, hierarchy, report_type):
         else:
             print(f"     [Warning] No data found for state {state_code}.")
 
-    # 2. Fetch Malaysia data separately (code "00")
     malaysia_data = get_metrics_dict("00", level="negeri")
     if not malaysia_data:
         print("     [Warning] No data found for Malaysia (00).")
 
-    # ==========================================================
-    # DATA INJECTION INTO EXCEL
-    # ==========================================================
     for row_idx, (location_code, year, level) in ROW_MAP.items():
-        # Choose the correct data source for this row
         if location_code == "Malaysia" and level == "malaysia":
-            # Use the separately fetched "00" data
             year_data = malaysia_data.get(year, {}) if malaysia_data else {}
         else:
-            # For states (01 to 16)
             state_data = state_cache.get(location_code, {})
             year_data = state_data.get(year, {})
 
-        # Fill each metric column for this row
         for col_idx, metric_name in COL_MAP.items():
-            # Try the main metric name first
             raw_val = year_data.get(metric_name, "n.a")
 
-            # Fallback: if looking for "jumlah_kematian_jalan_raya" and not found,
-            # try "jumlah_kematian" (which states use)
             if raw_val == "n.a" and metric_name == "jumlah_kematian_jalan_raya":
                 raw_val = year_data.get("jumlah_kematian", "n.a")
 
-            # Clean and parse missing values (original logic)
-            if pd.notna(raw_val) and raw_val != "n.a" and raw_val != "":
+            if raw_val is not None and str(raw_val).strip() not in ["", "n.a", "n.a.", "nan", "NaN"]:
                 try:
-                    val = float(raw_val)   # convert if possible
+                    val = float(raw_val)   
                 except (ValueError, TypeError):
-                    val = raw_val          # keep original (e.g., "-")
+                    val = raw_val          
             else:
                 val = "n.a"
 
-            # Write to Excel
-            sheet.range((row_idx, col_idx)).value = val
+            safe_write(sheet, row_idx, col_idx, val)

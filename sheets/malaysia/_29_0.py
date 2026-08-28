@@ -1,5 +1,6 @@
-import pandas as pd
+
 from src.data_provider import get_metrics_dict
+from src.excel_utils import inject_static_table
 
 # ==========================================
 # MAPPING CONFIGURATION FOR JADUAL 29.0 (Bil KSU)
@@ -46,40 +47,15 @@ COL_MAP = {
 }
 
 def populate_jadual_29_0(sheet, hierarchy, report_type):
-    print(f"  -> Populating Jadual 29.0 (Bil KSU) untuk Malaysia_29_0")
+    print("  -> Populating Jadual 29.0 (Bil KSU) untuk Malaysia")
     
-    # 1. Fetch the Data Payload strictly for Malaysia
     metrics_data = get_metrics_dict("Malaysia", level='malaysia')
-    
     if not metrics_data:
-            print(f"     [Warning] No data found for Malaysia.")
-            return
+        print("     [Warning] No data found for Malaysia.")
+        return
 
-    # ==========================================
-        # DYNAMIC TABLE TITLE MODIFICATION
-    # ==========================================
-    title_bm = ": Bilangan Ketua Setiausaha, Timbalan Ketua Setiausaha dan Ketua Pengarah mengikut jawatan dan jantina, Malaysia, 2022 - 2024"
-    title_en = ": Number of Secretary General, Deputy Secretary General and Director General by position and sex, Malaysia, 2022 - 2024"
+    # Titles (Openpyxl syntax)
+    sheet["C3"] = ": Bilangan Ketua Setiausaha, Timbalan Ketua Setiausaha dan Ketua Pengarah mengikut jawatan dan jantina, Malaysia, 2022 - 2024"
+    sheet["C4"] = ": Number of Secretary General, Deputy Secretary General and Director General by position and sex, Malaysia, 2022 - 2024"
         
-    # Set the exact cells where your title sits in the template
-    # Targeting Column C based on standard template behavior
-    sheet.range("C3").value = title_bm
-    sheet.range("C4").value = title_en
-
-    # Standard Injection Loop
-    for col_idx, year in COL_MAP.items():
-            year_data = metrics_data.get(str(year), {})
-            
-            for row_idx, metric_name in ROW_MAP.items():
-                val = year_data.get(metric_name, "n.a")
-                
-                # Clean and parse missing values
-                if pd.notna(val) and val != "n.a" and val != "":
-                    try: 
-                        val = float(val)
-                    except (ValueError, TypeError): 
-                        pass
-                else:
-                    val = "n.a"
-                    
-                sheet.range((row_idx, col_idx)).value = val
+    inject_static_table(sheet, metrics_data, ROW_MAP, COL_MAP)

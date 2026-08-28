@@ -1,5 +1,6 @@
 import pandas as pd
 from src.data_provider import get_metrics_dict
+from src.excel_utils import safe_write
 
 # ============================================================
 # 1. SHARED CONFIGURATION
@@ -106,22 +107,11 @@ LOCATIONS = [
 def populate_jadual_41(sheet, hierarchy, report_type):
     print("  -> Populating Jadual 41.0 (Statistik kutipan dan agihan zakat)")
 
-    # ==========================================================
-    # TITLE CONFIGURATION (CHANGE THESE STRINGS IF THE WORDING CHANGES)
-    # ==========================================================
-    title_bm = ": Statistik kutipan dan agihan zakat mengikut negeri, Malaysia, 2023 - 2025"
-    title_en = ": Zakat collection and distribution statistics by state, Malaysia, 2023 - 2025"
-    sheet.range("C3").value = title_bm
-    sheet.range("C4").value = title_en
+    # Titles (Openpyxl syntax)
+    sheet["C3"] = ": Statistik kutipan dan agihan zakat mengikut negeri, Malaysia, 2023 - 2025"
+    sheet["C4"] = ": Zakat collection and distribution statistics by state, Malaysia, 2023 - 2025"
 
-    # ==========================================================
-    # 1) FETCH ALL STATE DATA
-    # ==========================================================
-    # Extract unique state codes (excluding "Malaysia")
-    unique_states = set()
-    for loc, _ in LOCATIONS:
-        if loc != "Malaysia":
-            unique_states.add(loc)
+    unique_states = {loc for loc, _ in LOCATIONS if loc != "Malaysia"}
 
     state_cache = {}
     for state_code in unique_states:
@@ -131,9 +121,6 @@ def populate_jadual_41(sheet, hierarchy, report_type):
         else:
             print(f"     [Warning] No data found for state {state_code}.")
 
-    # ==========================================================
-    # 2) COMPUTE MALAYSIA TOTALS (SUM OF ALL STATES)
-    # ==========================================================
     metrics = ["kutipan", "agihan"]
     malaysia_totals = {}
     for year in COL_MAP.values():
@@ -149,36 +136,31 @@ def populate_jadual_41(sheet, hierarchy, report_type):
                         pass
         malaysia_totals[year] = totals
 
-    # ==========================================================
-    # 3) DATA INJECTION INTO EXCEL
-    # ==========================================================
     row_keys = list(ROW_MAP.keys())
     loc_values = list(LOCATIONS)
 
     for row_idx, (location_code, level) in zip(row_keys, loc_values):
-        metric_name = ROW_MAP[row_idx]   # "kutipan" or "agihan"
+        metric_name = ROW_MAP[row_idx]   
 
         if location_code == "Malaysia":
-            # Use the computed Malaysia totals
             for col_idx, year in COL_MAP.items():
                 raw_val = malaysia_totals.get(year, {}).get(metric_name, "n.a")
                 val = "n.a"
-                if pd.notna(raw_val) and str(raw_val).strip() not in ("", "n.a", "n.a.", "-"):
+                if pd.notna(raw_val) and str(raw_val).strip() not in ["", "n.a", "n.a.", "-", "nan", "NaN"]:
                     try:
                         val = float(raw_val)
                     except (ValueError, TypeError):
                         pass
-                sheet.range((row_idx, col_idx)).value = val
+                safe_write(sheet, row_idx, col_idx, val)
         else:
-            # Use state data
             state_data = state_cache.get(location_code, {})
             for col_idx, year in COL_MAP.items():
                 year_data = state_data.get(year, {})
                 raw_val = year_data.get(metric_name, "n.a")
                 val = "n.a"
-                if pd.notna(raw_val) and str(raw_val).strip() not in ("", "n.a", "n.a.", "-"):
+                if pd.notna(raw_val) and str(raw_val).strip() not in ["", "n.a", "n.a.", "-", "nan", "NaN"]:
                     try:
                         val = float(raw_val)
                     except (ValueError, TypeError):
                         pass
-                sheet.range((row_idx, col_idx)).value = val
+                safe_write(sheet, row_idx, col_idx, val)

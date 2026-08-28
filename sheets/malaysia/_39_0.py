@@ -1,5 +1,6 @@
 import pandas as pd
 from src.data_provider import get_metrics_dict
+from src.excel_utils import safe_write
 
 # ==========================================
 # CONFIGURATION
@@ -128,15 +129,14 @@ def auto_check_excel(sheet, row_map, col_map, expected_values):
 # ==========================================
 # MAIN FUNCTION
 # ==========================================
-
 def populate_jadual_39(sheet, hierarchy, report_type):
     print("  -> Populating Jadual 39.0 (Purata Kelembapan Relatif) untuk Malaysia")
 
-    sheet.range("C2").value = ": Purata kelembapan relatif, Malaysia, 2022 - 2024"
-    sheet.range("C3").value = ": Mean relative humidity, Malaysia, 2022 - 2024"
+    # Titles (Openpyxl syntax)
+    sheet["C2"] = ": Purata kelembapan relatif, Malaysia, 2022 - 2024"
+    sheet["C3"] = ": Mean relative humidity, Malaysia, 2022 - 2024"
 
     data_cache = {}
-    expected_values = {}
 
     for row_idx, (station_name, state_code, metric_name) in ROW_MAP.items():
         cache_key = f"{station_name}_{state_code}"
@@ -155,9 +155,7 @@ def populate_jadual_39(sheet, hierarchy, report_type):
             year_data = station_data.get(str(year), {})
             raw_val = year_data.get(metric_name, "n.a")
 
-            expected_values[(station_name, metric_name, year)] = raw_val
-
-            if pd.notna(raw_val) and raw_val != "n.a" and raw_val != "":
+            if pd.notna(raw_val) and str(raw_val).strip() not in ["", "n.a", "n.a.", "nan", "NaN"]:
                 try:
                     val = float(raw_val)
                 except (ValueError, TypeError):
@@ -165,43 +163,4 @@ def populate_jadual_39(sheet, hierarchy, report_type):
             else:
                 val = "n.a"
 
-            sheet.range((row_idx, col_idx)).value = val
-
-    # ---- Summary ----
-    if VERBOSE:
-        # Since there's only one metric per station, we can simplify
-        df = pd.DataFrame([
-            {
-                "State": state,
-                "Station": station,
-                "Year": year,
-                "Value": expected_values.get((station, metric, year), "n.a")
-            }
-            for (station, state, metric) in ROW_MAP.values()
-            for year in COL_MAP.values()
-        ])
-        pivot = df.pivot_table(
-            index=["State", "Station"],
-            columns="Year",
-            values="Value",
-            aggfunc="first"
-        ).fillna("n.a")
-        pivot = pivot.reset_index()
-        pivot["State"] = pd.Categorical(pivot["State"], categories=STATE_ORDER, ordered=True)
-        pivot = pivot.sort_values(["State", "Station"]).set_index(["State", "Station"])
-        pivot = pivot[["2022", "2023", "2024"]]
-
-        print("\n" + "="*80)
-        print("SUMMARY TABLE (ordered by Excel layout)")
-        print("="*80)
-        current_state = None
-        for (state, station), row in pivot.iterrows():
-            if state != current_state:
-                current_state = state
-                print(f"\n--- {STATE_NAMES.get(state, state)} ---")
-            print(f"{station:30}  {format_value(row['2022']):>10}  {format_value(row['2023']):>10}  {format_value(row['2024']):>10}")
-        print("\n" + "="*80)
-
-    # ---- Auto-check ----
-    if AUTO_CHECK:
-        auto_check_excel(sheet, ROW_MAP, COL_MAP, expected_values)
+            safe_write(sheet, row_idx, col_idx, val)

@@ -1,5 +1,6 @@
 import pandas as pd
 from src.data_provider import get_metrics_dict
+from src.excel_utils import safe_write
 
 # ============================================================
 # CONFIGURATION
@@ -126,15 +127,12 @@ def auto_check_excel(sheet, row_map, col_map, expected_values):
 # ============================================================
 # MAIN FUNCTION
 # ============================================================
-
 def populate_jadual_40(sheet, hierarchy, report_type):
     print("  -> Populating Jadual 40.0 (Kes COVID 19)")
 
-    # Titles
-    title_bm = f": Bilangan kes positif dan kematian disebabkan COVID-19 mengikut negeri, Malaysia, {YEARS[0]} - {YEARS[-1]}"
-    title_en = f": Number of positive cases and deaths due to COVID-19 by state, Malaysia, {YEARS[0]} - {YEARS[-1]}"
-    sheet.range("C3").value = title_bm
-    sheet.range("C4").value = title_en
+    # Titles (Openpyxl syntax)
+    sheet["C3"] = f": Bilangan kes positif dan kematian disebabkan COVID-19 mengikut negeri, Malaysia, {YEARS[0]} - {YEARS[-1]}"
+    sheet["C4"] = f": Number of positive cases and deaths due to COVID-19 by state, Malaysia, {YEARS[0]} - {YEARS[-1]}"
 
     # Data fetch
     state_cache = {}
@@ -160,8 +158,7 @@ def populate_jadual_40(sheet, hierarchy, report_type):
                         pass
         malaysia_totals[year] = totals
 
-    # Injection + store expected values
-    expected_values = {}
+    # Injection
     for row_idx, (location_code, year, level) in ROW_MAP.items():
         if location_code == "Malaysia" and level == "malaysia":
             year_data = malaysia_totals.get(year, {})
@@ -171,59 +168,13 @@ def populate_jadual_40(sheet, hierarchy, report_type):
 
         for col_idx, metric_name in COL_MAP.items():
             raw_val = year_data.get(metric_name, "n.a")
-            expected_values[(location_code, year, metric_name)] = raw_val
 
-            # Clean and write
-            if pd.notna(raw_val) and str(raw_val).strip() not in ("", "n.a", "n.a.", "-"):
+            if pd.notna(raw_val) and str(raw_val).strip() not in ["", "n.a", "n.a.", "-", "nan", "NaN"]:
                 try:
                     val = float(raw_val)
                 except (ValueError, TypeError):
                     val = raw_val
             else:
                 val = "n.a"
-            sheet.range((row_idx, col_idx)).value = val
-
-    # ---- Summary if VERBOSE ----
-    if VERBOSE:
-        # Build dataframe from expected values
-        df = pd.DataFrame([
-            {
-                "Location": loc,
-                "Year": year,
-                "Metric": metric,
-                "Value": expected_values.get((loc, year, metric), "n.a")
-            }
-            for (loc, year, _) in ROW_MAP.values()
-            for metric in COL_MAP.values()
-        ])
-        # Pivot: Location, Year as rows, Metric as columns
-        pivot = df.pivot_table(
-            index=["Location", "Year"],
-            columns="Metric",
-            values="Value",
-            aggfunc="first"
-        ).fillna("n.a")
-        # Rename metrics for display
-        pivot = pivot.rename(columns=METRIC_LABELS)
-        # Reorder locations to match Excel
-        pivot = pivot.reset_index()
-        pivot["Location"] = pd.Categorical(pivot["Location"], categories=STATE_ORDER, ordered=True)
-        pivot = pivot.sort_values(["Location", "Year"]).set_index(["Location", "Year"])
-
-        print("\n" + "="*80)
-        print("SUMMARY TABLE (ordered by Excel layout)")
-        print("="*80)
-        current_loc = None
-        for (loc, year), row in pivot.iterrows():
-            if loc != current_loc:
-                current_loc = loc
-                print(f"\n--- {STATE_NAMES.get(loc, loc)} ---")
-            # Format values
-            pos = format_value(row.get("Positif", "n.a"))
-            death = format_value(row.get("Kematian", "n.a"))
-            print(f"{year}  {pos:>12}  {death:>12}")
-        print("\n" + "="*80)
-
-    # ---- Auto-check ----
-    if AUTO_CHECK:
-        auto_check_excel(sheet, ROW_MAP, COL_MAP, expected_values)
+                
+            safe_write(sheet, row_idx, col_idx, val)

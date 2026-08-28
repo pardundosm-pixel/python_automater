@@ -1,5 +1,5 @@
-import pandas as pd
 from src.data_provider import get_metrics_dict
+from src.excel_utils import inject_static_table
 
 # ==========================================
 # MAPPING CONFIGURATION FOR JADUAL 18.0 (Stok Modal)
@@ -30,40 +30,15 @@ COL_MAP = {
 }
 
 def populate_jadual_30_0(sheet, hierarchy, report_type):
-    print(f"  -> Populating Jadual 30.0 (Bil Murid) untuk Malaysia_30_0")
+    print("  -> Populating Jadual 30.0 (Bil Murid) untuk Malaysia")
     
-    # 1. Fetch the Data Payload strictly for Malaysia
     metrics_data = get_metrics_dict("00", level='negeri')
-    
     if not metrics_data:
-            print(f"     [Warning] No data found for Malaysia.")
-            return
+        print("     [Warning] No data found for Malaysia.")
+        return
 
-    # ==========================================
-        # DYNAMIC TABLE TITLE MODIFICATION
-    # ==========================================
-    title_bm = ": Bilangan murid pelbagai peringkat dan jenis sekolah, Malaysia, 2024 - 2025"
-    title_en = ": Number of pupils of various level and types of school, Malaysia, 2024 - 2025"
+    # Titles (Openpyxl syntax)
+    sheet["D2"] = ": Bilangan murid pelbagai peringkat dan jenis sekolah, Malaysia, 2024 - 2025"
+    sheet["D3"] = ": Number of pupils of various level and types of school, Malaysia, 2024 - 2025"
         
-    # Set the exact cells where your title sits in the template
-    # Targeting Column C based on standard template behavior
-    sheet.range("D2").value = title_bm
-    sheet.range("D3").value = title_en
-
-    # Standard Injection Loop
-    for col_idx, year in COL_MAP.items():
-            year_data = metrics_data.get(str(year), {})
-            
-            for row_idx, metric_name in ROW_MAP.items():
-                val = year_data.get(metric_name, "n.a")
-                
-                # Clean and parse missing values
-                if pd.notna(val) and val != "n.a" and val != "":
-                    try: 
-                        val = float(val)
-                    except (ValueError, TypeError): 
-                        pass
-                else:
-                    val = "n.a"
-                    
-                sheet.range((row_idx, col_idx)).value = val
+    inject_static_table(sheet, metrics_data, ROW_MAP, COL_MAP)

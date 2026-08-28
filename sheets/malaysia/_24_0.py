@@ -1,5 +1,6 @@
-import pandas as pd
+
 from src.data_provider import get_metrics_dict
+from src.excel_utils import inject_static_table
 
 # ==========================================
 # MAPPING CONFIGURATION FOR JADUAL 24.0 (IHPR)
@@ -31,45 +32,21 @@ COL_MAP = {
     7  : "2025"   
 }
 
+# ==========================================
+# REPORT INJECTION ENGINE
+# ==========================================
 def populate_jadual_24_0(sheet, hierarchy, report_type):
-    print(f"  -> Populating Jadual 24.0 (IHPR) untuk Malaysia_24_0")
+    print("  -> Populating Jadual 24.0 (IHPR) untuk Malaysia")
     
-    # 1. Fetch the Data Payload strictly for Malaysia
     metrics_data = get_metrics_dict("Malaysia", level='malaysia')
-    
     if not metrics_data:
-            print(f"     [Warning] No data found for Malaysia.")
-            return
+        print("     [Warning] No data found for Malaysia.")
+        return
 
-    # ==========================================
-        # DYNAMIC TABLE TITLE MODIFICATION
-    # ==========================================
-    title_bm  = ": Indeks Harga Pengeluar (IHPR) Pengeluaran Tempatan dan Perubahan Peratus Tahunan mengikut "
-    title_bm2 = "  Sektor, Malaysia, 2023 - 2025 "
-    title_en  = ": Producer Price Index (PPI) Local Production and Annual Percentage Change by Sector, Malaysia, "
-    title_en2 = "  2023 - 2025"
+    # Titles (Openpyxl syntax)
+    sheet["C1"] = ": Indeks Harga Pengeluar (IHPR) Pengeluaran Tempatan dan Perubahan Peratus Tahunan mengikut "
+    sheet["C2"] = "  Sektor, Malaysia, 2023 - 2025 "
+    sheet["C3"] = ": Producer Price Index (PPI) Local Production and Annual Percentage Change by Sector, Malaysia, "
+    sheet["C4"] = "  2023 - 2025"
         
-    # Set the exact cells where your title sits in the template
-    # Targeting Column C based on standard template behavior
-    sheet.range("C1").value = title_bm
-    sheet.range("C2").value = title_bm2
-    sheet.range("C3").value = title_en
-    sheet.range("C4").value = title_en2
-
-    # Standard Injection Loop
-    for col_idx, year in COL_MAP.items():
-            year_data = metrics_data.get(str(year), {})
-            
-            for row_idx, metric_name in ROW_MAP.items():
-                val = year_data.get(metric_name, "n.a")
-                
-                # Clean and parse missing values
-                if pd.notna(val) and val != "n.a" and val != "":
-                    try: 
-                        val = float(val)
-                    except (ValueError, TypeError): 
-                        pass
-                else:
-                    val = "n.a"
-                    
-                sheet.range((row_idx, col_idx)).value = val
+    inject_static_table(sheet, metrics_data, ROW_MAP, COL_MAP)

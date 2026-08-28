@@ -1,5 +1,6 @@
-import pandas as pd
+
 from src.data_provider import get_metrics_dict
+from src.excel_utils import safe_write
 
 # ============================================================
 # 1. SHARED CONFIGURATION (change years here only)
@@ -45,30 +46,25 @@ for year_idx, year in enumerate(YEARS):
 def populate_jadual_34(sheet, hierarchy, report_type):
     print("  -> Populating Jadual 34.0 (Peratusan capaian ICT)")
 
-    # Titles – year range is auto‑generated from YEARS
-    title_bm = f": Peratusan capaian isi rumah terhadap perkhidmatan dan peralatan ICT mengikut strata, Malaysia, {YEARS[0]} - {YEARS[-1]}"
-    title_en = f": Percentage of households with access to ICT services and equipment by strata, Malaysia, {YEARS[0]} - {YEARS[-1]}"
-    sheet.range("C1").value = title_bm
-    sheet.range("C2").value = title_en
+    sheet["C1"] = f": Peratusan capaian isi rumah terhadap perkhidmatan dan peralatan ICT mengikut strata, Malaysia, {YEARS[0]} - {YEARS[-1]}"
+    sheet["C2"] = f": Percentage of households with access to ICT services and equipment by strata, Malaysia, {YEARS[0]} - {YEARS[-1]}"
 
-    # ==========================================================
-    # DATA FETCHING – Malaysia data is stored under code "00" as negeri
-    # ==========================================================
     malaysia_data = get_metrics_dict("00", level="negeri")
     if not malaysia_data:
         print("     [Warning] No data found for Malaysia (00).")
         return
 
-    # Inject data
     for row_idx, category in ROW_MAP.items():
         for col_idx, (year, strata) in COL_MAP.items():
             metric_name = f"{strata}_{category}"
             year_data = malaysia_data.get(year, {})
             raw_val = year_data.get(metric_name, "n.a")
             val = "n.a"
-            if pd.notna(raw_val) and str(raw_val).strip() not in ("", "n.a", "n.a."):
+            
+            if raw_val is not None and str(raw_val).strip() not in ["", "n.a", "n.a.", "nan", "NaN"]:
                 try:
                     val = float(raw_val)
                 except (ValueError, TypeError):
                     pass
-            sheet.range((row_idx, col_idx)).value = val
+            
+            safe_write(sheet, row_idx, col_idx, val)

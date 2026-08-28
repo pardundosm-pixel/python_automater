@@ -1,5 +1,6 @@
-import pandas as pd
+
 from src.data_provider import get_metrics_dict
+from src.excel_utils import safe_write
 
 # ==========================================
 # 1. MAPPING CONFIGURATION FOR JADUAL 36.0
@@ -41,50 +42,33 @@ ROW_MAP = {
 def populate_jadual_36_0(sheet, hierarchy, report_type):
     print("  -> Populating Jadual 36.0 (Statistik Pertanian) untuk Malaysia")
 
-    # 1. Fetch the Data Payload strictly for Malaysia
     metrics_data = get_metrics_dict("Malaysia", level='malaysia')
     
     if not metrics_data:
         print(f"     [Warning] No data found for Malaysia.")
         return
 
-    # 2. Extract only the target year's data
     year_data = metrics_data.get(TARGET_YEAR, {})
     
     if not year_data:
         print(f"     [Warning] No data found for the year {TARGET_YEAR}.")
 
-    # ==========================================
-    # DYNAMIC TABLE TITLE MODIFICATION
-    # ==========================================
-    title_bm = f": Statistik Penggunaan Per Kapita, Kadar Sara Diri dan Kadar Kebergantungan Import Item Pertanian,"
-    title_bm_part2 = f"  Malaysia, 2024"
-    title_en = f": Statistics of Per Capita Consumption, Self-Sufficiency Ratio and Import Dependency Ratio of"
-    title_en_part2 = f"  Agricultural Items, Malaysia, 2024"
+    # Titles (Openpyxl syntax)
+    sheet["C3"] = ": Statistik Penggunaan Per Kapita, Kadar Sara Diri dan Kadar Kebergantungan Import Item Pertanian,"
+    sheet["C4"] = "  Malaysia, 2024"
+    sheet["C5"] = ": Statistics of Per Capita Consumption, Self-Sufficiency Ratio and Import Dependency Ratio of"
+    sheet["C6"] = "  Agricultural Items, Malaysia, 2024"
 
-    # Target the exact cells where your title sits (Adjust if necessary based on your template)
-    sheet.range("C3").value = title_bm
-    sheet.range("C4").value = title_bm_part2
-    sheet.range("C5").value = title_en
-    sheet.range("C6").value = title_en_part2
-    # ==========================================
-
-    # 3. Inject Data
-    # Iterate through each row defined in our map
     for row_idx, columns_dict in ROW_MAP.items():
-        
-        # Iterate through the columns and their respective metrics for that row
         for col_idx, metric_name in columns_dict.items():
-            val = year_data.get(metric_name, "n.a")
+            raw_val = year_data.get(metric_name, "n.a")
             
-            # Clean and parse missing values
-            if pd.notna(val) and val != "n.a" and val != "":
+            if raw_val is not None and str(raw_val).strip() not in ["", "n.a", "n.a.", "nan", "NaN"]:
                 try: 
-                    val = float(val)
+                    val = float(raw_val)
                 except (ValueError, TypeError): 
-                    pass
+                    val = "n.a"
             else:
                 val = "n.a"
                 
-            # Inject into the exact cell intersection
-            sheet.range((row_idx, col_idx)).value = val
+            safe_write(sheet, row_idx, col_idx, val)

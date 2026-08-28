@@ -1,5 +1,6 @@
-import pandas as pd
+
 from src.data_provider import get_metrics_dict
+from src.excel_utils import inject_static_table
 
 # ==========================================
 # 1. MAPPING CONFIGURATION FOR JADUAL 20.0 (MALAYSIA)
@@ -102,42 +103,18 @@ COL_MAP_GROWTH = {
 }
 
 
-# ==========================================
-# 2. REPORT INJECTION ENGINE
-# ==========================================
 def populate_jadual_20(sheet, hierarchy, report_type):
-    print(f"  -> Populating Jadual 20.0 (Eksport Import) untuk Malaysia")
+    print("  -> Populating Jadual 20.0 (Eksport Import) untuk Malaysia")
 
-    # 1. Fetch the Data Payload strictly for Malaysia
     metrics_data = get_metrics_dict("Malaysia", level='malaysia')
-    
     if not metrics_data:
-        print(f"     [Warning] No data found for Malaysia.")
+        print("     [Warning] No data found for Malaysia.")
         return
 
-    # 2. Static Title Injection
-    title_bm = ": Eksport, import, jumlah dagangan dan imbangan dagangan, Malaysia, 2023 - 2025"
-    title_en = ": Exports, imports, total trade and balance of trade, Malaysia, 2023 - 2025"
-    sheet.range("C3").value = title_bm
-    sheet.range("C4").value = title_en
+    # Titles
+    sheet["C3"] = ": Eksport, import, jumlah dagangan dan imbangan dagangan, Malaysia, 2023 - 2025"
+    sheet["C4"] = ": Exports, imports, total trade and balance of trade, Malaysia, 2023 - 2025"
 
-    # 3. Inject Data using a helper function to avoid repeating logic
-    def inject_grid(col_map, row_map):
-        for col_idx, year in col_map.items():
-            year_data = metrics_data.get(str(year), {})
-            for row_idx, metric_name in row_map.items():
-                val = year_data.get(metric_name, "n.a")
-                
-                if pd.notna(val) and val != "n.a" and val != "":
-                    try: 
-                        val = float(val)
-                    except (ValueError, TypeError): 
-                        pass
-                else:
-                    val = "n.a"
-                    
-                sheet.range((row_idx, col_idx)).value = val
-
-    # Execute injection for both sides of the table
-    inject_grid(COL_MAP_VALUE, ROW_MAP_VALUE)
-    inject_grid(COL_MAP_GROWTH, ROW_MAP_GROWTH)
+    # Inject both sides of the grid
+    inject_static_table(sheet, metrics_data, ROW_MAP_VALUE, COL_MAP_VALUE)
+    inject_static_table(sheet, metrics_data, ROW_MAP_GROWTH, COL_MAP_GROWTH)

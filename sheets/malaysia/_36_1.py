@@ -1,5 +1,6 @@
 import pandas as pd
 from src.data_provider import get_metrics_dict
+from src.excel_utils import safe_write
 
 # ==========================================
 # 1. MAPPING CONFIGURATION FOR JADUAL 36.1
@@ -53,20 +54,12 @@ ROW_MAP = {
 def populate_jadual_36_1(sheet, hierarchy, report_type):
     print("  -> Populating Jadual 36.1 (Statistik Terpilih PCC) untuk Malaysia & Negeri")
 
-    # 1. Static Title Injection (year from REPORT_YEAR)
-    title_bm = f": Statistik terpilih Penggunaan Per Kapita item pertanian mengikut negeri, Malaysia, {REPORT_YEAR}"
-    title_en = f": Selected statistics of Per Capita Consumption of agricultural item by state, Malaysia, {REPORT_YEAR}"
-    
-    sheet.range("C3").value = title_bm
-    sheet.range("C5").value = title_en
+    sheet["C3"] = f": Statistik terpilih Penggunaan Per Kapita item pertanian mengikut negeri, Malaysia, {REPORT_YEAR}"
+    sheet["C5"] = f": Selected statistics of Per Capita Consumption of agricultural item by state, Malaysia, {REPORT_YEAR}"
 
-    # 2. Cache dictionary to prevent querying the database multiple times
     data_cache = {}
 
-    # 3. Inject Data
     for row_idx, (location, year, level) in ROW_MAP.items():
-        
-        # Fetch data only if we haven't fetched this location yet
         if location not in data_cache:
             data_cache[location] = get_metrics_dict(location, level=level)
             if not data_cache[location]:
@@ -76,15 +69,14 @@ def populate_jadual_36_1(sheet, hierarchy, report_type):
         year_data = location_data.get(year, {})
         
         for col_idx, metric_name in COL_MAP.items():
-            val = year_data.get(metric_name, "n.a")
+            raw_val = year_data.get(metric_name, "n.a")
             
-            # Clean and parse missing values
-            if pd.notna(val) and val != "n.a" and val != "":
+            if pd.notna(raw_val) and str(raw_val).strip() not in ["", "n.a", "n.a.", "nan", "NaN"]:
                 try: 
-                    val = float(val)
+                    val = float(raw_val)
                 except (ValueError, TypeError): 
-                    pass
+                    val = raw_val
             else:
                 val = "n.a"
                 
-            sheet.range((row_idx, col_idx)).value = val
+            safe_write(sheet, row_idx, col_idx, val)

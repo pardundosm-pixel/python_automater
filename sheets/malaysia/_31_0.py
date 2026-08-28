@@ -1,5 +1,5 @@
-import pandas as pd
 from src.data_provider import get_metrics_dict
+from src.excel_utils import safe_write
 
 # ============================================================
 # SHARED CONFIGURATION (change years here for ALL tables)
@@ -73,24 +73,10 @@ ROW_MAP = generate_row_map(start_row=START_ROW, locations=LOCATIONS, years=YEARS
 def populate_jadual_31(sheet, hierarchy, report_type):
     print("  -> Populating Jadual 31.0 (Jenayah Kekerasan)")
 
-    # ==========================================================
-    # TITLE CONFIGURATION (CHANGE THESE STRINGS IF THE TITLE CHANGES)
-    # The year range is automatically generated from the YEARS list.
-    # ==========================================================
+    # Titles (Openpyxl syntax)
+    sheet["C3"] = f": Jenayah kekerasan mengikut negeri dan jenis jenayah, Malaysia, {YEARS[0]} - {YEARS[-1]}"
+    sheet["C4"] = f": Assault crime by state and type of crime, Malaysia, {YEARS[0]} - {YEARS[-1]}"
 
-    # BM title – split across two rows as per the template
-    title_bm = f": Jenayah kekerasan mengikut negeri dan jenis jenayah, Malaysia, {YEARS[0]} - {YEARS[-1]}"
-
-    # EN title – single row
-    title_en = f": Assault crime by state and type of crime, Malaysia, {YEARS[0]} - {YEARS[-1]}"
-
-    # Write the titles to the Excel sheet
-    sheet.range("C3").value = title_bm
-    sheet.range("C4").value = title_en
-
-    # ==========================================================
-    # DATA INJECTION (no changes needed here)
-    # ==========================================================
     data_cache = {}
 
     for row_idx, (location_code, year, level) in ROW_MAP.items():
@@ -104,13 +90,12 @@ def populate_jadual_31(sheet, hierarchy, report_type):
         for col_idx, metric_name in COL_MAP.items():
             raw_val = year_data.get(metric_name, "n.a")
             
-            # Only treat NaN, "n.a", and empty string as missing
-            if pd.notna(raw_val) and raw_val != "n.a" and raw_val != "":
+            if raw_val is not None and str(raw_val).strip() not in ["", "n.a", "n.a.", "nan", "NaN"]:
                 try:
                     val = float(raw_val)
                 except (ValueError, TypeError):
-                    val = raw_val          # keep original value (e.g., "-")
+                    val = raw_val          
             else:
                 val = "n.a"
             
-            sheet.range((row_idx, col_idx)).value = val
+            safe_write(sheet, row_idx, col_idx, val)

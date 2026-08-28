@@ -1,5 +1,6 @@
 import pandas as pd
 from src.data_provider import get_metrics_dict
+from src.excel_utils import safe_write
 
 # ============================================================
 # 1. SHARED CONFIGURATION
@@ -80,13 +81,10 @@ ROW_MAP = {
 def populate_jadual_40_1(sheet, hierarchy, report_type):
     print("  -> Populating Jadual 40.1 (Statistik penerima vaksin COVID-19 mengikut umur)")
 
-    # TITLES: Matches your specific C2 and C3 layout
-    title_bm = f": Statistik penerima vaksin COVID-19 mengikut umur, Malaysia, {YEARS[0]}"
-    title_en = f": Statistics of COVID-19 vaccine recipient by age, Malaysia, {YEARS[0]}"
-    sheet.range("C2").value = title_bm
-    sheet.range("C3").value = title_en
+    # Titles (Openpyxl syntax)
+    sheet["C2"] = f": Statistik penerima vaksin COVID-19 mengikut umur, Malaysia, {YEARS[0]}"
+    sheet["C3"] = f": Statistics of COVID-19 vaccine recipient by age, Malaysia, {YEARS[0]}"
 
-    # DATA FETCHING & CACHING
     malaysia_data = get_metrics_dict("Malaysia", level="malaysia")
     if not malaysia_data:
         print("     [Warning] No data found for Malaysia.")
@@ -100,22 +98,19 @@ def populate_jadual_40_1(sheet, hierarchy, report_type):
             else:
                 print(f"     [Warning] No data found for state {code}.")
 
-    # DATA INJECTION INTO EXCEL
     for row_idx, (location_code, level) in ROW_MAP.items():
-        # Choose data source
         if location_code == "Malaysia" and level == "malaysia":
             year_data = malaysia_data.get(YEARS[0], {}) if malaysia_data else {}
         else:
             state_data = state_cache.get(location_code, {})
             year_data = state_data.get(YEARS[0], {})
 
-        # Fill each metric column starting at column D (4)
         for col_idx, metric_name in COL_MAP.items():
             raw_val = year_data.get(metric_name, "n.a")
             val = "n.a"
-            if pd.notna(raw_val) and str(raw_val).strip() not in ("", "n.a", "n.a.", "-"):
+            if pd.notna(raw_val) and str(raw_val).strip() not in ["", "n.a", "n.a.", "-", "nan", "NaN"]:
                 try:
                     val = float(raw_val)
                 except (ValueError, TypeError):
                     pass
-            sheet.range((row_idx, col_idx)).value = val
+            safe_write(sheet, row_idx, col_idx, val)
