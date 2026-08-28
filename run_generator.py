@@ -2,7 +2,6 @@ import argparse
 from src.engine import generate_report
 
 def main():
-    # 1. Setup the Industry-Standard CLI Argument Parser
     parser = argparse.ArgumentParser(description="Surgical Test Generator for Subnasional Reports")
     
     parser.add_argument(
@@ -15,6 +14,7 @@ def main():
     parser.add_argument('--state', type=str, help="State Code (e.g., '01' for Johor)")
     parser.add_argument('--parlimen', type=str, help="Parliament Code (e.g., 'P.143')")
     parser.add_argument('--dun', type=str, help="DUN Code (e.g., 'N.07')")
+    parser.add_argument('--sheets', nargs='+', help="Specific sheets to run (e.g., '1.0' '2.1' '4.0')")
 
     args = parser.parse_args()
 
@@ -26,14 +26,24 @@ def main():
         # --- ROUTE 1: MALAYSIA ---
         if args.template == "malaysia":
             print("--- Testing Phase D: Malaysia Report ---")
-            generate_report(location_code="00", report_type='malaysia', template_key=args.template)
+            generate_report(
+                location_code="00", 
+                report_type='malaysia', 
+                template_key=args.template, 
+                allowed_sheets=args.sheets
+            )
 
         # --- ROUTE 2: NEGERI ---
         elif args.template == "negeri":
             if not args.state:
                 raise ValueError("You must provide --state when testing the 'negeri' template.")
             print(f"--- Testing Phase C: Negeri Report (State {args.state}) ---")
-            generate_report(location_code=args.state, report_type='negeri', template_key=args.template)
+            generate_report(
+                location_code=args.state, 
+                report_type='negeri', 
+                template_key=args.template, 
+                allowed_sheets=args.sheets
+            )
 
         # --- ROUTE 3: PARLIMEN & DUN ---
         elif args.template == "parlimen_dun":
@@ -42,7 +52,12 @@ def main():
                 
             # Run target Parliament
             print(f"--- Testing Phase A: Parliament Report ({args.parlimen}) ---")
-            generate_report(location_code=args.parlimen, report_type='parlimen', template_key=args.template)
+            generate_report(
+                location_code=args.parlimen, 
+                report_type='parlimen', 
+                template_key=args.template, 
+                allowed_sheets=args.sheets
+            )
             
             # Run target DUN (if provided)
             if args.dun:
@@ -51,7 +66,8 @@ def main():
                     location_code=args.dun, 
                     report_type='dun', 
                     parent_code=args.parlimen, 
-                    template_key=args.template
+                    template_key=args.template,
+                    allowed_sheets=args.sheets
                 )
             else:
                 print("\n[!] No --dun provided. Skipping Phase B.")
