@@ -1,5 +1,6 @@
 import pandas as pd
 from src.data_provider import get_metrics_dict, get_pdrm_hierarchy
+from src.excel_utils import safe_write, inject_static_table
 
 # ==========================================
 # 1. MAPPING & PAGINATION CONFIGURATION
@@ -38,11 +39,10 @@ BLOCK_START_ROWS = (
 )
 
 # Title coordinates: the BM title is split across two cells (long prefix line, then a
-# second cell holding the state name + years), while the EN title is a single cell.
 TITLE_COORDINATES = [
-    {"bm_prefix": "C2", "bm_suffix": "C3", "en": "C4", "is_samb": False},      # Page 1 Titles
-    {"bm_prefix": "C74", "bm_suffix": "C75", "en": "C76", "is_samb": True},    # Page 2 Titles
-    {"bm_prefix": "C146", "bm_suffix": "C147", "en": "C148", "is_samb": True}  # Page 3 Titles
+    {"bm": (2, 3), "bm": (3, 3), "en": (4, 3), "is_samb": False},      
+    {"bm": (74, 3), "bm": (75, 3), "en": (76, 3), "is_samb": True},    
+    {"bm": (146, 3), "bm": (147, 3), "en": (148, 3), "is_samb": True}  
 ]
 
 # ==========================================
@@ -60,17 +60,15 @@ def sanitize_value(val):
     return "n.a"
 
 # ==========================================
-# 2. REPORT INJECTION ENGINE
+# REPORT INJECTION ENGINE
 # ==========================================
 def populate_jadual_51(sheet, hierarchy, report_type):
     state_name = hierarchy.get('state_name', 'Unknown State')
     state_code = hierarchy.get('state_code', '00')
     print(f"  -> Populating Jadual 51.0 (Kemalangan Jalan Raya) untuk {state_name}")
 
-    # Fetch PDRM districts directly using the isolated domain dimension
     pdrm_districts = get_pdrm_hierarchy(state_code)
 
-    # 1. Title Generation
     title_bm_prefix = ": Bilangan kemalangan jalan raya, kecederaan dan kematian yang dilaporkan mengikut daerah PDRM, "
     title_bm_suffix_base = f"  {state_name}, 2023 - 2025"
     title_en_base = f": Number of road accidents, injuries and deaths reported by PDRM district, {state_name}, 2023 - 2025"
@@ -78,14 +76,11 @@ def populate_jadual_51(sheet, hierarchy, report_type):
     for coords in TITLE_COORDINATES:
         suffix_bm = " (samb.)" if coords["is_samb"] else ""
         suffix_en = " (cont'd)" if coords["is_samb"] else ""
-        sheet.range(coords["bm_prefix"]).value = title_bm_prefix
-        sheet.range(coords["bm_suffix"]).value = title_bm_suffix_base + suffix_bm
-        sheet.range(coords["en"]).value = title_en_base + suffix_en
+        safe_write(sheet, coords["bm"][0], coords["bm"][1], title_bm_prefix)
+        safe_write(sheet, coords["bm"][0], coords["bm"][1], title_bm_suffix_base + suffix_bm)
+        safe_write(sheet, coords["en"][0], coords["en"][1], title_en_base + suffix_en)
 
-    # 2. State-Level Data Injection
-    sheet.range((STATE_START_ROW, COL_DISTRICT)).value = state_name.upper()
-
-    # Fetch State Total directly from the general Negeri fact table
+    safe_write(sheet, STATE_START_ROW, COL_DISTRICT, state_name.upper())
     state_metrics = get_metrics_dict(state_code, level='negeri')
 
     for offset, year in YEAR_OFFSETS.items():
@@ -94,16 +89,14 @@ def populate_jadual_51(sheet, hierarchy, report_type):
 
         for col_idx, metric_name in COL_METRICS_MAP.items():
             raw_val = year_data.get(metric_name, "n.a")
-            sheet.range((target_row, col_idx)).value = sanitize_value(raw_val)
+            safe_write(sheet, target_row, col_idx, sanitize_value(raw_val))
 
-    # 3. District-Level Data Injection & Cleanup
     total_districts = len(pdrm_districts)
 
     for district_idx, base_row in enumerate(BLOCK_START_ROWS):
         if district_idx < total_districts:
-            # --- Inject District Data ---
             dist_code = pdrm_districts[district_idx]['code']
-            sheet.range((base_row, COL_DISTRICT)).value = pdrm_districts[district_idx]['name']
+            safe_write(sheet, base_row, COL_DISTRICT, pdrm_districts[district_idx]['name'])
 
             branch_metrics = get_metrics_dict(dist_code, level='pdrm', parent_code=state_code)
 
@@ -113,22 +106,18 @@ def populate_jadual_51(sheet, hierarchy, report_type):
 
                 for col_idx, metric_name in COL_METRICS_MAP.items():
                     raw_val = year_data.get(metric_name, "n.a")
-                    sheet.range((target_row, col_idx)).value = sanitize_value(raw_val)
+                    safe_write(sheet, target_row, col_idx, sanitize_value(raw_val))
         else:
-            # --- Cleanup Unused Row ---
-            sheet.range((base_row, COL_DISTRICT)).value = None
+            # XML-Level Nested Cleanup
+            safe_write(sheet, base_row, COL_DISTRICT, None)
             for offset in YEAR_OFFSETS.keys():
-                sheet.range((base_row + offset, min(COL_METRICS_MAP.keys())),
-                            (base_row + offset, max(COL_METRICS_MAP.keys()))).value = None
+                for c in range(min(COL_METRICS_MAP.keys()), max(COL_METRICS_MAP.keys()) + 1):
+                    safe_write(sheet, base_row + offset, c, None)
 
-    # 4. Dynamic Page Elimination (Cleanup unused pages)
-    # Page 1 holds 13 districts, Page 2 holds 13 more (26 total), Page 3 holds the remaining 14 (40 total)
+    # XML-Level Page Deletion (Start Row, Delete Amount)
     if total_districts <= 13:
         print("     [FORMAT] State only needs 1 page. Eliminating Page 2 and 3.")
-        # Page 2 title starts row 74.
-        sheet.range('73:300').delete()
-
+        sheet.delete_rows(73, 227) # Wipes from row 73 downwards
     elif total_districts <= 26:
         print("     [FORMAT] State needs 2 pages. Eliminating Page 3.")
-        # Page 3 title starts row 146.
-        sheet.range('140:300').delete()
+        sheet.delete_rows(140, 160) # Wipes from row 140 downwards

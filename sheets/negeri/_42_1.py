@@ -1,5 +1,6 @@
 import pandas as pd
 from src.data_provider import get_metrics_dict
+from src.excel_utils import safe_write
 
 # ==========================================
 # 1. MAPPING & PAGINATION CONFIGURATION
@@ -33,53 +34,57 @@ BLOCK_START_ROWS = (
 
 # TODO: Update these cell coordinates if the titles are placed in different cells in the new template.
 TITLE_COORDINATES = [
-    {"bm": "C2", "en": "C3", "is_samb": False},     # Page 1 Title
-    {"bm": "C76", "en": "C77", "is_samb": True},    # Page 2 Title
-    {"bm": "C142", "en": "C143", "is_samb": True}   # Page 3 Title
+    {"bm": (2, 3), "en": (3, 3), "is_samb": False},     # Page 1 Title
+    {"bm": (76, 3), "en": (77, 3), "is_samb": True},    # Page 2 Title
+    {"bm": (142, 3), "en": (143, 3), "is_samb": True}   # Page 3 Title
 ]
 
 # ==========================================
 # 2. REPORT INJECTION ENGINE
 # ==========================================
-# TODO: Rename this function to match your new Jadual (e.g., populate_jadual_54_0)
 def populate_jadual_42_1(sheet, hierarchy, report_type):
     state_name = hierarchy.get('state_name', 'Unknown State')
     state_code = hierarchy.get('state_code', '00')
     districts = hierarchy.get('districts', [])
+    print(f"  -> Populating Jadual 42.1 (KDNK Daerah) untuk {state_name}")
 
     # 1. Title Generation
-    # TODO: Update the base title text to reflect the metrics of the new Jadual
     title_bm_base = f": Keluaran Dalam Negeri Kasar (KDNK) mengikut daerah pentadbiran, {state_name}, 2018 - 2020"
     title_en_base = f": Gross Domestic Product (GDP) by administrative district, {state_name}, 2018 - 2020"
     
     for coords in TITLE_COORDINATES:
         suffix_bm = " (samb.)" if coords["is_samb"] else ""
         suffix_en = " (cont'd)" if coords["is_samb"] else ""
-        sheet.range(coords["bm"]).value = title_bm_base + suffix_bm
-        sheet.range(coords["en"]).value = title_en_base + suffix_en
+        safe_write(sheet, coords["bm"][0], coords["bm"][1], title_bm_base + suffix_bm)
+        safe_write(sheet, coords["en"][0], coords["en"][1], title_en_base + suffix_en)
 
     # 2. State-Level Data Injection
-    sheet.range((STATE_START_ROW, COL_DISTRICT)).value = state_name.upper()
+    safe_write(sheet, STATE_START_ROW, COL_DISTRICT, state_name.upper())
+    
+    # Fetch State Total using the specialized empty-cell trigger in the daerah table
     state_metrics = get_metrics_dict("STATE_TOTAL", level='daerah', parent_code=state_code)
     
     for offset, year in YEAR_OFFSETS.items():
         target_row = STATE_START_ROW + offset
         year_data = state_metrics.get(year, {})
         
-        # TODO: Change the dictionary keys here to match the specific database metrics you want to pull
         val_kdnk = year_data.get("kdnk_mengikut_jenis_aktiviti_ekonomi_pada_harga_malar_2015_rm_juta", "n.a")
         val_pct = year_data.get("peratus_perubahan_peratusan_tahunan", "n.a")
         
-        sheet.range((target_row, COL_VALUE)).value = float(val_kdnk) if pd.notna(val_kdnk) and val_kdnk not in ["n.a", ""] else "n.a"
-        sheet.range((target_row, COL_PCT)).value = float(val_pct) if pd.notna(val_pct) and val_pct not in ["n.a", ""] else "n.a"
+        final_kdnk = float(val_kdnk) if pd.notna(val_kdnk) and val_kdnk not in ["n.a", ""] else "n.a"
+        final_pct = float(val_pct) if pd.notna(val_pct) and val_pct not in ["n.a", ""] else "n.a"
+        
+        safe_write(sheet, target_row, COL_VALUE, final_kdnk)
+        safe_write(sheet, target_row, COL_PCT, final_pct)
 
     # 3. District-Level Data Injection & Cleanup 
     total_districts = len(districts)
     
     for district_idx, base_row in enumerate(BLOCK_START_ROWS):
         if district_idx < total_districts:
+            # --- Inject District Data ---
             dist_code = districts[district_idx]['code']
-            sheet.range((base_row, COL_DISTRICT)).value = districts[district_idx]['name']
+            safe_write(sheet, base_row, COL_DISTRICT, districts[district_idx]['name'])
             
             dist_metrics = get_metrics_dict(dist_code, level='daerah', parent_code=state_code)
             
@@ -87,26 +92,28 @@ def populate_jadual_42_1(sheet, hierarchy, report_type):
                 target_row = base_row + offset
                 year_data = dist_metrics.get(year, {})
                 
-                # TODO: Change these dictionary keys to match the state-level metrics above
                 val_kdnk = year_data.get("kdnk_mengikut_jenis_aktiviti_ekonomi_pada_harga_malar_2015_rm_juta", "n.a")
                 val_pct = year_data.get("peratus_perubahan_peratusan_tahunan", "n.a")
                 
-                # TODO: If your new Jadual has different columns or requires less variables, update this writing block
-                sheet.range((target_row, COL_VALUE)).value = float(val_kdnk) if pd.notna(val_kdnk) and val_kdnk not in ["n.a", ""] else "n.a"
-                sheet.range((target_row, COL_PCT)).value = float(val_pct) if pd.notna(val_pct) and val_pct not in ["n.a", ""] else "n.a"
+                final_kdnk = float(val_kdnk) if pd.notna(val_kdnk) and val_kdnk not in ["n.a", ""] else "n.a"
+                final_pct = float(val_pct) if pd.notna(val_pct) and val_pct not in ["n.a", ""] else "n.a"
+                
+                safe_write(sheet, target_row, COL_VALUE, final_kdnk)
+                safe_write(sheet, target_row, COL_PCT, final_pct)
         else:
-            # Wipe the dummy row clean if no district exists for this slot
-            sheet.range((base_row, COL_DISTRICT), (base_row + len(YEAR_OFFSETS), COL_PCT)).value = None
+            # --- Openpyxl Safe XML Wiping ---
+            # Iterates through every row in the block and safely wipes columns B through I
+            for r in range(base_row, base_row + len(YEAR_OFFSETS)):
+                for c in range(COL_DISTRICT, COL_PCT + 1):
+                    safe_write(sheet, r, c, None)
 
-    # 4. Dynamic Page Elimination (Cleanup unused pages)
-    # TODO: Adjust the `total_districts` threshold limits based on how many blocks fit on your new template's pages.
-    # TODO: Adjust the `.delete()` row ranges (e.g., '75:300') to precisely target where Page 2 and Page 3 begin in the new template.
+    # 4. XML-Level Page Deletion
+    # Syntax: sheet.delete_rows(start_row_index, number_of_rows_to_delete)
+    # Deleting ~225 rows safely clears out all artifacts to the bottom of the template.
     if total_districts <= 15:
-        # State only needs 1 page. Delete Page 2 and Page 3 entirely.
         print("     [FORMAT] State only needs 1 page. Eliminating Page 2 and 3.")
-        sheet.range('75:300').delete()
+        sheet.delete_rows(75, 225) 
         
     elif total_districts <= 28:
-        # State needs 2 pages. Delete Page 3 entirely.
         print("     [FORMAT] State needs 2 pages. Eliminating Page 3.")
-        sheet.range('141:300').delete()
+        sheet.delete_rows(141, 160)

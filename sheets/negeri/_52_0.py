@@ -1,5 +1,6 @@
 import pandas as pd
 from src.data_provider import get_metrics_dict
+from src.excel_utils import safe_write, inject_static_table
 
 # ==========================================
 # 1. MAPPING & PAGINATION CONFIGURATION
@@ -31,7 +32,7 @@ ROW_MAP = {
     33: "telefon_talian_tetap",
 }
 
-TITLE_COORDINATES = {"bm": "C1", "en": "C2"}
+TITLE_COORDINATES = {"bm": (1,3), "en": (2,3)}
 
 # ==========================================
 # SANITIZER HELPER
@@ -48,20 +49,18 @@ def sanitize_value(val):
     return "n.a"
 
 # ==========================================
-# 2. REPORT INJECTION ENGINE
+# REPORT INJECTION ENGINE
 # ==========================================
 def populate_jadual_52(sheet, hierarchy, report_type):
     state_name = hierarchy.get('state_name', 'Unknown State')
     state_code = hierarchy.get('state_code', '00')
 
-    # 1. Title Generation
     title_bm = f": Peratusan capaian isi rumah terhadap perkhidmatan dan peralatan ICT mengikut strata, {state_name}, 2023 - 2025"
     title_en = f": Percentage of households with access to ICT services and equipment by strata, {state_name}, 2023 - 2025"
 
-    sheet.range(TITLE_COORDINATES["bm"]).value = title_bm
-    sheet.range(TITLE_COORDINATES["en"]).value = title_en
+    safe_write(sheet, TITLE_COORDINATES["bm"][0], TITLE_COORDINATES["bm"][1], title_bm)
+    safe_write(sheet, TITLE_COORDINATES["en"][0], TITLE_COORDINATES["en"][1], title_en)
 
-    # 2. State-Level Data Injection (item-by-item, no district loop)
     state_metrics = get_metrics_dict(state_code, level='negeri')
 
     for item_row, item_name in ROW_MAP.items():
@@ -73,6 +72,6 @@ def populate_jadual_52(sheet, hierarchy, report_type):
             raw_bandar = year_data.get(f"bandar_{item_name}", "n.a")
             raw_luar_bandar = year_data.get(f"luar_bandar_{item_name}", "n.a")
 
-            sheet.range((target_row, COL_JUMLAH)).value = sanitize_value(raw_jumlah)
-            sheet.range((target_row, COL_BANDAR)).value = sanitize_value(raw_bandar)
-            sheet.range((target_row, COL_LUAR_BANDAR)).value = sanitize_value(raw_luar_bandar)
+            safe_write(sheet, target_row, COL_JUMLAH, sanitize_value(raw_jumlah))
+            safe_write(sheet, target_row, COL_BANDAR, sanitize_value(raw_bandar))
+            safe_write(sheet, target_row, COL_LUAR_BANDAR, sanitize_value(raw_luar_bandar))

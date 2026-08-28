@@ -1,5 +1,6 @@
 import pandas as pd
 from src.data_provider import get_metrics_dict
+from src.excel_utils import safe_write
 
 # ==========================================
 # 1. MAPPING & PAGINATION CONFIGURATION
@@ -36,20 +37,20 @@ BLOCK_START_ROWS = (
 )
 
 # Title cells for 45.1: "bm"/"en" hold the description text in column C,
-# one row apart (row N = BM, row N+1 = EN).
 TITLE_COORDINATES = [
-    {"bm": "C3", "en": "C4", "is_samb": False},      # Page 1 Title
-    {"bm": "C81", "en": "C82", "is_samb": True},      # Page 2 Title
-    {"bm": "C157", "en": "C158", "is_samb": True}     # Page 3 Title
+    {"bm": (3, 3), "en": (4, 3), "is_samb": False},      # Page 1 Title
+    {"bm": (81, 3), "en": (82, 3), "is_samb": True},     # Page 2 Title
+    {"bm": (157, 3), "en": (158, 3), "is_samb": True}    # Page 3 Title
 ]
 
 # ==========================================
-# 2. REPORT INJECTION ENGINE
+# REPORT INJECTION ENGINE
 # ==========================================
 def populate_jadual_45_1(sheet, hierarchy, report_type):
     state_name = hierarchy.get('state_name', 'Unknown State')
     state_code = hierarchy.get('state_code', '00')
     districts = hierarchy.get('districts', [])
+    print(f"  -> Populating Jadual 45.1 (Tenaga Buruh Daerah) untuk {state_name}")
 
     # 1. Title Generation
     title_bm_base = f": Statistik utama tenaga buruh mengikut daerah pentadbiran, {state_name}, 2022r - 2024"
@@ -58,70 +59,67 @@ def populate_jadual_45_1(sheet, hierarchy, report_type):
     for coords in TITLE_COORDINATES:
         suffix_bm = " (samb.)" if coords["is_samb"] else ""
         suffix_en = " (cont'd)" if coords["is_samb"] else ""
-        sheet.range(coords["bm"]).value = title_bm_base + suffix_bm
-        sheet.range(coords["en"]).value = title_en_base + suffix_en
+        safe_write(sheet, coords["bm"][0], coords["bm"][1], title_bm_base + suffix_bm)
+        safe_write(sheet, coords["en"][0], coords["en"][1], title_en_base + suffix_en)
 
     # 2. State-Level Data Injection
-    sheet.range((STATE_START_ROW, COL_DISTRICT)).value = state_name.upper()
+    safe_write(sheet, STATE_START_ROW, COL_DISTRICT, state_name.upper())
     state_metrics = get_metrics_dict(state_code, level='negeri')
 
     for offset, year in YEAR_OFFSETS.items():
         target_row = STATE_START_ROW + offset
         year_data = state_metrics.get(year, {})
 
-        val_tenaga_buruh = year_data.get("tenaga_buruh", "n.a")
-        val_penduduk_bekerja = year_data.get("penduduk_bekerja", "n.a")
-        val_penganggur = year_data.get("penganggur", "n.a")
-        val_luar_tenaga_buruh = year_data.get("luar_tenaga_buruh", "n.a")
-        val_kadar_penyertaan = year_data.get("peratus_kadar_penyertaan_tenaga_buruh", "n.a")
-        val_kadar_pengangguran = year_data.get("peratus_kadar_pengangguran", "n.a")
+        metrics = {
+            COL_TENAGA_BURUH: year_data.get("tenaga_buruh", "n.a"),
+            COL_PENDUDUK_BEKERJA: year_data.get("penduduk_bekerja", "n.a"),
+            COL_PENGANGGUR: year_data.get("penganggur", "n.a"),
+            COL_LUAR_TENAGA_BURUH: year_data.get("luar_tenaga_buruh", "n.a"),
+            COL_KADAR_PENYERTAAN: year_data.get("peratus_kadar_penyertaan_tenaga_buruh", "n.a"),
+            COL_KADAR_PENGANGGURAN: year_data.get("peratus_kadar_pengangguran", "n.a")
+        }
 
-        sheet.range((target_row, COL_TENAGA_BURUH)).value = float(val_tenaga_buruh) if pd.notna(val_tenaga_buruh) and val_tenaga_buruh not in ["n.a", ""] else "n.a"
-        sheet.range((target_row, COL_PENDUDUK_BEKERJA)).value = float(val_penduduk_bekerja) if pd.notna(val_penduduk_bekerja) and val_penduduk_bekerja not in ["n.a", ""] else "n.a"
-        sheet.range((target_row, COL_PENGANGGUR)).value = float(val_penganggur) if pd.notna(val_penganggur) and val_penganggur not in ["n.a", ""] else "n.a"
-        sheet.range((target_row, COL_LUAR_TENAGA_BURUH)).value = float(val_luar_tenaga_buruh) if pd.notna(val_luar_tenaga_buruh) and val_luar_tenaga_buruh not in ["n.a", ""] else "n.a"
-        sheet.range((target_row, COL_KADAR_PENYERTAAN)).value = float(val_kadar_penyertaan) if pd.notna(val_kadar_penyertaan) and val_kadar_penyertaan not in ["n.a", ""] else "n.a"
-        sheet.range((target_row, COL_KADAR_PENGANGGURAN)).value = float(val_kadar_pengangguran) if pd.notna(val_kadar_pengangguran) and val_kadar_pengangguran not in ["n.a", ""] else "n.a"
+        for col, val in metrics.items():
+            final_val = float(val) if pd.notna(val) and val not in ["n.a", ""] else "n.a"
+            safe_write(sheet, target_row, col, final_val)
 
-    # 3. District-Level Data Injection & Cleanup
+    # 3. District-Level Data Injection & Safe Cleanup
     total_districts = len(districts)
 
     for district_idx, base_row in enumerate(BLOCK_START_ROWS):
         if district_idx < total_districts:
             dist_code = districts[district_idx]['code']
-            sheet.range((base_row, COL_DISTRICT)).value = districts[district_idx]['name']
-
+            safe_write(sheet, base_row, COL_DISTRICT, districts[district_idx]['name'])
             dist_metrics = get_metrics_dict(dist_code, level='daerah', parent_code=state_code)
 
             for offset, year in YEAR_OFFSETS.items():
                 target_row = base_row + offset
                 year_data = dist_metrics.get(year, {})
 
-                val_tenaga_buruh = year_data.get("tenaga_buruh", "n.a")
-                val_penduduk_bekerja = year_data.get("penduduk_bekerja", "n.a")
-                val_penganggur = year_data.get("penganggur", "n.a")
-                val_luar_tenaga_buruh = year_data.get("luar_tenaga_buruh", "n.a")
-                val_kadar_penyertaan = year_data.get("peratus_kadar_penyertaan_tenaga_buruh", "n.a")
-                val_kadar_pengangguran = year_data.get("peratus_kadar_pengangguran", "n.a")
+                metrics = {
+                    COL_TENAGA_BURUH: year_data.get("tenaga_buruh", "n.a"),
+                    COL_PENDUDUK_BEKERJA: year_data.get("penduduk_bekerja", "n.a"),
+                    COL_PENGANGGUR: year_data.get("penganggur", "n.a"),
+                    COL_LUAR_TENAGA_BURUH: year_data.get("luar_tenaga_buruh", "n.a"),
+                    COL_KADAR_PENYERTAAN: year_data.get("peratus_kadar_penyertaan_tenaga_buruh", "n.a"),
+                    COL_KADAR_PENGANGGURAN: year_data.get("peratus_kadar_pengangguran", "n.a")
+                }
 
-                sheet.range((target_row, COL_TENAGA_BURUH)).value = float(val_tenaga_buruh) if pd.notna(val_tenaga_buruh) and val_tenaga_buruh not in ["n.a", ""] else "n.a"
-                sheet.range((target_row, COL_PENDUDUK_BEKERJA)).value = float(val_penduduk_bekerja) if pd.notna(val_penduduk_bekerja) and val_penduduk_bekerja not in ["n.a", ""] else "n.a"
-                sheet.range((target_row, COL_PENGANGGUR)).value = float(val_penganggur) if pd.notna(val_penganggur) and val_penganggur not in ["n.a", ""] else "n.a"
-                sheet.range((target_row, COL_LUAR_TENAGA_BURUH)).value = float(val_luar_tenaga_buruh) if pd.notna(val_luar_tenaga_buruh) and val_luar_tenaga_buruh not in ["n.a", ""] else "n.a"
-                sheet.range((target_row, COL_KADAR_PENYERTAAN)).value = float(val_kadar_penyertaan) if pd.notna(val_kadar_penyertaan) and val_kadar_penyertaan not in ["n.a", ""] else "n.a"
-                sheet.range((target_row, COL_KADAR_PENGANGGURAN)).value = float(val_kadar_pengangguran) if pd.notna(val_kadar_pengangguran) and val_kadar_pengangguran not in ["n.a", ""] else "n.a"
+                for col, val in metrics.items():
+                    final_val = float(val) if pd.notna(val) and val not in ["n.a", ""] else "n.a"
+                    safe_write(sheet, target_row, col, final_val)
         else:
-            # Wipe the dummy row clean if no district exists for this slot
-            sheet.range((base_row, COL_DISTRICT), (base_row + len(YEAR_OFFSETS), COL_KADAR_PENGANGGURAN)).value = None
+            # --- Openpyxl Safe XML Wiping ---
+            for r in range(base_row, base_row + len(YEAR_OFFSETS)):
+                for c in range(COL_DISTRICT, COL_KADAR_PENGANGGURAN + 1):
+                    safe_write(sheet, r, c, None)
 
-    # 4. Dynamic Page Elimination (Cleanup unused pages)
-    # Page 1 holds 13 districts, Page 2 holds 13 more (26 total), Page 3 holds the remaining 14 (40 total)
+    # 4. XML-Level Page Deletion
+    # Syntax: sheet.delete_rows(start_row_index, number_of_rows_to_delete)
     if total_districts <= 13:
-        # State only needs 1 page. Delete Page 2 and Page 3 entirely (page 2 title starts row 81).
         print("     [FORMAT] State only needs 1 page. Eliminating Page 2 and 3.")
-        sheet.range('80:300').delete()
+        sheet.delete_rows(80, 220)  # Deletes 220 rows starting at row 80
 
     elif total_districts <= 26:
-        # State needs 2 pages. Delete Page 3 entirely (page 3 title starts row 157).
         print("     [FORMAT] State needs 2 pages. Eliminating Page 3.")
-        sheet.range('156:300').delete()
+        sheet.delete_rows(156, 144) # Deletes 144 rows starting at row 156
