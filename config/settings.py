@@ -1,26 +1,30 @@
 import os
 
-# Define root directory dynamically
+# ==========================================
+# ROOT
+# ==========================================
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-# Data Paths
-DATABASE_PATH = os.path.join(BASE_DIR, 'data', 'normalized_database_2026_v4.xlsx')
+# ==========================================
+# TEMPLATE SOURCES
+# ==========================================
+# Master jadual templates (pure: no locations, no data).
+# One .xlsx per jadual. Consumed by Stage 1 (location_injection_batch.py).
+TEMPLATES_DIR = "/Users/akmalhakim/Downloads/_NBDAC/Subnasional/template_generator/1_template_automation/output_v2"
+
 
 # ==========================================
-# MASTER TEMPLATE CONFIGURATION
+# PIPELINE STAGING
 # ==========================================
-# TODO: Update this string to the exact name of your new combined Excel file
-MASTER_TEMPLATE_NAME = 'TEMPLATE_PARLIMEN 2026 AS AT 17.8.2026.xlsx' 
-MASTER_TEMPLATE_PATH = os.path.join(BASE_DIR, 'data', MASTER_TEMPLATE_NAME)
+# Stage 1 output: {state}/Jadual N.xlsx   (locations injected, data empty)
+OUTPUT_LOCATIONS_DIR = "/Users/akmalhakim/Downloads/_NBDAC/Subnasional/template_generator/2_location_injector/output_with_locations"
 
-# We keep the dictionary structure so engine.py routing doesn't break, 
-# but we point all profiles to the exact same master file.
-TEMPLATE_PATHS = {
-    "parlimen_dun": MASTER_TEMPLATE_PATH,
-    "malaysia": MASTER_TEMPLATE_PATH,
-    "negeri": MASTER_TEMPLATE_PATH,
-}
+# Stage 2 output: {state}/Jadual N.xlsx   (locations + data)
+OUTPUT_FINAL_DIR = os.path.join(BASE_DIR, 'output_final')
 
-# Output Path
+
+# ==========================================
+# LEGACY  (kept only so the deferred pdf_compiler.py still imports)
+# TODO: remove once pdf_compiler.py is rewritten.
+# ==========================================
 OUTPUT_DIR = os.path.join(BASE_DIR, 'output')
-# OUTPUT_DIR = r"C:\Users\rubiah\Desktop\Subnasional 2026\parlimen_dun_python_code\python_automater\output"  # Hardcoded for testing

@@ -1,163 +1,200 @@
+"""
+src/engine.py
+=============
+Stage-2 orchestrator: inject metric values into one jadual file for one state.
+
+Design
+------
+* Plugin registry keyed by JADUAL NUMBER (not sheet-name prefix).
+* Each `sheets/jadual_N.py` must expose:
+      JADUAL_NUMBER   : int
+      populate_column : (ws, col_idx, metrics_by_year) -> None
+* Engine locates every location column by parsing the header row of the
+  Stage-1 output file. Mappers are location-agnostic: they only know the
+  row layout of *their* jadual.
+"""
 import os
-import openpyxl
-import importlib
+import re
 import pkgutil
-from config.settings import TEMPLATE_PATHS, OUTPUT_DIR
-from src.data_provider import get_location_hierarchy, get_dun_hierarchy, get_negeri_hierarchy
+import importlib
+import openpyxl
 
-# Import the base packages so pkgutil can scan them
-import sheets.parlimen_dun
-import sheets.malaysia
-import sheets.negeri
+from config.settings import OUTPUT_FINAL_DIR  # noqa: F401  (re-exported for convenience)
+from src.data_provider import get_metrics_dict
+
 
 # ==========================================
-# 1. DYNAMIC PLUGIN REGISTRY BUILDER
+# 1. PLUGIN REGISTRY
 # ==========================================
-MASTER_REGISTRY = {
-    "parlimen_dun": {},
-    "malaysia": {},
-    "negeri": {}
-}
+import sheets  # requires sheets/__init__.py
 
-PACKAGE_MAP = {
-    "parlimen_dun": sheets.parlimen_dun,
-    "malaysia": sheets.malaysia,
-    "negeri": sheets.negeri
-}
+MASTER_REGISTRY: dict[int, callable] = {}
 
-print("[ENGINE] Booting up and discovering sheet mappers...")
+print("[ENGINE] Discovering jadual mappers...")
+for _, module_name, is_pkg in pkgutil.iter_modules(sheets.__path__):
+    if is_pkg or not module_name.startswith("jadual_"):
+        continue
+    mod = importlib.import_module(f"sheets.{module_name}")
+    if not hasattr(mod, "JADUAL_NUMBER") or not hasattr(mod, "populate_column"):
+        print(f"  [skip] {module_name}: missing JADUAL_NUMBER or populate_column")
+        continue
+    MASTER_REGISTRY[int(mod.JADUAL_NUMBER)] = mod.populate_column
+    print(f"  loaded sheets/{module_name}.py  →  Jadual {mod.JADUAL_NUMBER}")
 
-for profile, package in PACKAGE_MAP.items():
-    # Scan the folder for any python files (e.g., '_14_0.py')
-    for _, module_name, is_pkg in pkgutil.iter_modules(package.__path__):
-        if is_pkg or not module_name.startswith('_'):
+print(f"[ENGINE] {len(MASTER_REGISTRY)} jadual mapper(s) registered.\n")
+
+
+# ==========================================
+# 2. LAYOUT CONSTANTS  (mirror location_injection_batch.py)
+# ==========================================
+KATEGORI_ROW = 6          # header row where locations live
+COL_B        = 2          # "MAKLUMAT ASAS" label column
+COL_C        = 3          # year column (or first location col if no year)
+COL_D        = 4          # first location col when a year column exists
+COL_L        = 12         # rightmost location column
+
+
+# ==========================================
+# 3. HEADER PARSER
+# ==========================================
+def detect_location_start_col(ws, header_row: int = KATEGORI_ROW) -> int:
+    """
+    If the C-column header contains 'Tahun'/'Year', the jadual has a year
+    column and locations start at D. Otherwise they start at C.
+    """
+    c_val = ws.cell(row=header_row, column=COL_C).value
+    has_year = c_val is not None and "tahun" in str(c_val).lower()
+    return COL_D if has_year else COL_C
+
+
+def parse_header_locations(ws, header_row: int = KATEGORI_ROW,
+                           start_col: int | None = None,
+                           end_col: int = COL_L):
+    """
+    Walk the header row and return an ordered list of dicts:
+        {col, kind, kod, nama, parent_parlimen}
+
+    kind ∈ {'negeri', 'parlimen', 'dun'}
+    parent_parlimen is filled for DUNs from the last-seen parliament to the left.
+    """
+    if start_col is None:
+        start_col = detect_location_start_col(ws, header_row)
+
+    locations = []
+    current_parlimen = None
+
+    for col in range(start_col, end_col + 1):
+        val = ws.cell(row=header_row, column=col).value
+        if val is None:
             continue
-            
-        full_module_name = f"{package.__name__}.{module_name}"
-        mod = importlib.import_module(full_module_name)
-        
-        # Convert file name '_14_0' to prefix '14.0'
-        prefix = module_name.lstrip('_').replace('_', '.')
-        
-        for attr_name in dir(mod):
-            if attr_name.startswith("populate_jadual_"):
-                func = getattr(mod, attr_name)
-                MASTER_REGISTRY[profile][prefix] = func
-                break
+        text = str(val).strip()
+        if not text:
+            continue
 
-print(f"[ENGINE] Discovery complete. Loaded {sum(len(v) for v in MASTER_REGISTRY.values())} total sheet mappers.")
+        # "P.140\nSegamat"  ->  kod, nama
+        if "\n" in text:
+            kod, nama = text.split("\n", 1)
+            kod, nama = kod.strip(), nama.strip()
+        else:
+            kod, nama = None, text
+
+        if kod and kod.upper().startswith("P."):
+            current_parlimen = kod
+            locations.append({
+                "col": col, "kind": "parlimen",
+                "kod": kod, "nama": nama, "parent_parlimen": None,
+            })
+        elif kod and kod.upper().startswith("N."):
+            locations.append({
+                "col": col, "kind": "dun",
+                "kod": kod, "nama": nama, "parent_parlimen": current_parlimen,
+            })
+        else:
+            # Fallback: no prefix ⇒ state cell ("Johor")
+            locations.append({
+                "col": col, "kind": "negeri",
+                "kod": None, "nama": nama, "parent_parlimen": None,
+            })
+
+    return locations
+
+
+def extract_jadual_number(filename: str) -> int | None:
+    """'Jadual 7.xlsx' → 7.  Accepts 'Jadual 7.xlsx', 'Jadual_7.xlsx', etc."""
+    m = re.search(r"Jadual[\s_]+(\d+)", filename, re.IGNORECASE)
+    return int(m.group(1)) if m else None
 
 
 # ==========================================
-# 2. REPORT ORCHESTRATOR
+# 4. METRIC LOOKUP
 # ==========================================
-def generate_report(location_code: str, report_type: str, parent_code: str = None, template_key: str = "parlimen_dun", allowed_sheets: list = None):
-    print(f"\n=============================================")
-    print(f"Generating {report_type.upper()} Report [{template_key}] for: {location_code}")
-    
-    # --- A. HIERARCHY FETCHING ---
-    if report_type == 'parlimen':
-        hierarchy = get_location_hierarchy(location_code)
-    elif report_type == 'dun':
-        hierarchy = get_dun_hierarchy(location_code, parent_code)
-    elif report_type == 'negeri':
-        hierarchy = get_negeri_hierarchy(location_code)
-    elif report_type == 'malaysia':
-        hierarchy = {'state_name': 'Malaysia', 'location_name': 'Malaysia', 'state_code': '00'}
-    else:
-        print(f"  -> [Error] Invalid report_type '{report_type}'. Must be 'parlimen', 'dun', 'negeri', or 'malaysia'.")
-        return
-        
-    if not hierarchy:
-        print(f"  -> [Error] Could not find {location_code} in the dimension table.")
-        return
+def fetch_metrics_for_location(loc: dict, state_code: str) -> dict:
+    """Return {year: {metric: value}} for one location, or {} on failure."""
+    kind = loc["kind"]
+    try:
+        if kind == "parlimen":
+            return get_metrics_dict(loc["kod"], "parlimen")
+        if kind == "dun":
+            return get_metrics_dict(loc["kod"], "dun",
+                                    parent_code=loc["parent_parlimen"])
+        if kind == "negeri":
+            return get_metrics_dict(state_code, "negeri")
+    except Exception as e:
+        print(f"  [warn] metric fetch failed for {loc}: {e}")
+    return {}
+
+
+# ==========================================
+# 5. PER-FILE ORCHESTRATOR
+# ==========================================
+def generate_jadual_for_state(state_name: str,
+                              state_code: str,
+                              jadual_filename: str,
+                              input_path: str,
+                              output_path: str) -> str:
+    """
+    Load one Stage-1 jadual file, populate every location column,
+    and save to output_path.  Returns a status string starting with
+    ✅ (success) or ❌ (failure).
+    """
+    jadual_num = extract_jadual_number(jadual_filename)
+    if jadual_num is None:
+        return f"❌ Cannot parse jadual number from '{jadual_filename}'"
+
+    mapper = MASTER_REGISTRY.get(jadual_num)
+    if mapper is None:
+        return f"❌ No mapper registered for Jadual {jadual_num}"
 
     wb = None
     try:
-        # --- B. OPEN THE CORRECT TEMPLATE ---
-        target_template_path = TEMPLATE_PATHS.get(template_key)
-        if not target_template_path:
-            print(f"  -> [Error] Template key '{template_key}' not found in settings.py TEMPLATE_PATHS.")
-            return
-            
-        wb = openpyxl.load_workbook(target_template_path)
-        
-        # --- C. GET THE CORRECT MAPPERS ---
-        active_mappers = MASTER_REGISTRY.get(template_key, {})
-        if not active_mappers:
-            print(f"  -> [Warning] No mappers defined in MASTER_REGISTRY for '{template_key}'.")
-            
-        sorted_prefixes = sorted(active_mappers.keys(), key=len, reverse=True)
-        
-        # --- D. DYNAMIC ROUTING & CLI OVERRIDE ---
-        populated_sheets = set()
-    
-        for sheet in wb.worksheets:
-            sheet_name_clean = str(sheet.title).strip()
-            for prefix in sorted_prefixes:
-                if sheet_name_clean.startswith(prefix):
-                    
-                    # Intercept via CLI allowlist
-                    if allowed_sheets and prefix not in allowed_sheets:
-                        print(f"  -> Skipping {prefix} (Not in --sheets allowlist)")
-                        break
-                    
-                    mapper_function = active_mappers[prefix]
-                    mapper_function(sheet, hierarchy, report_type)
-                    populated_sheets.add(sheet.title)
-                    break
+        wb = openpyxl.load_workbook(input_path)
+        ws = wb.active  # one sheet per jadual file
 
-        # --- E. UNUSED SHEET PURGING ---
-        print(f"  -> Purging {len(wb.worksheets) - len(populated_sheets)} unused sheets...")
-        sheets_to_delete = [sheet.title for sheet in wb.worksheets if sheet.title not in populated_sheets]
-        
-        if len(wb.worksheets) > len(sheets_to_delete):
-            for sheet_name in sheets_to_delete:
-                del wb[sheet_name]
+        locations = parse_header_locations(ws)
+        if not locations:
+            return f"❌ No locations found in header row of {jadual_filename}"
 
-        # --- F. CONSTRUCT OUTPUT DIRECTORY & SAVE ---
-        state_name = str(hierarchy.get('state_name', 'Unknown_State')).strip()
-        safe_state_name = state_name.replace('/', '_').replace('\\', '_')
-        state_code = str(hierarchy.get('state_code', '00')).strip().zfill(2)
-        
-        base_output_dir = os.path.abspath(OUTPUT_DIR)
-        
-        if template_key == "parlimen_dun":
-            category_folder = os.path.join(base_output_dir, "Jadual 1 - 13 (Parlimen & DUN)")
-        elif template_key == "malaysia":
-            category_folder = os.path.join(base_output_dir, "Jadual Malaysia")
-        elif template_key == "negeri":
-            category_folder = os.path.join(base_output_dir, "Jadual Negeri")
-        else:
-            category_folder = os.path.join(base_output_dir, f"Lain-lain ({template_key})")
+        # Populate every non-state column
+        populated = 0
+        for loc in locations:
+            if loc["kind"] == "negeri":
+                continue  # state cell is a label only — no data column
+            metrics = fetch_metrics_for_location(loc, state_code)
+            mapper(ws, loc["col"], metrics)
+            populated += 1
 
-        if report_type == 'parlimen':
-            parl_code = str(hierarchy.get('parl_code', '')).strip()
-            parl_name = str(hierarchy.get('parl_name', '')).strip()
-            target_dir = os.path.join(category_folder, safe_state_name, "Parlimen")
-            file_name = f"{parl_code} {parl_name}.xlsx"
-        elif report_type == 'dun':
-            dun_code = str(hierarchy.get('dun_code', '')).strip()
-            dun_name = str(hierarchy.get('dun_name', '')).strip()
-            target_dir = os.path.join(category_folder, safe_state_name, "DUN")
-            file_name = f"{state_code}_{dun_code} {dun_name}.xlsx"
-        elif report_type == 'negeri':
-            target_dir = category_folder
-            file_name = f"Jadual_42_56_{safe_state_name}.xlsx"
-        elif report_type == 'malaysia':
-            target_dir = category_folder
-            file_name = "Jadual_14_41_Malaysia.xlsx"
-        
-        os.makedirs(target_dir, exist_ok=True)
-        save_path = os.path.realpath(os.path.join(target_dir, file_name))
-        
-        wb.save(save_path)
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        wb.save(output_path)
         wb.close()
-        print(f"  -> Success! Saved to:\n     {save_path}")
+        wb = None
+
+        return (f"✅ {state_name}/{jadual_filename}  "
+                f"({populated} location column(s) populated)")
 
     except Exception as e:
-        print(f"  -> [Critical Error]: {e}")
-        if wb:
+        return f"❌ FAILED {state_name}/{jadual_filename} | {e}"
+    finally:
+        if wb is not None:
             try:
                 wb.close()
             except Exception:
