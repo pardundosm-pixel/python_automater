@@ -84,7 +84,8 @@ ROW_MAP: dict[int, tuple[str, str]] = {
 # ==========================================
 # COLUMN WRITER
 # ==========================================
-def populate_column(ws, col_idx: int, metrics_by_year: dict, row_offset: int = 0):
+def populate_column(ws, col_idx: int, metrics_by_year: dict,
+                    row_offset: int = 0, bold: bool = False):
     """
     Write one location's values into `col_idx`.
 
@@ -94,9 +95,11 @@ def populate_column(ws, col_idx: int, metrics_by_year: dict, row_offset: int = 0
     col_idx          : absolute column index to write into
     metrics_by_year  : {year_str: {metric_name: value}}
     row_offset       : 0 for page 1, +50 for page 2, +100 for page 3, …
+    bold             : True if this column is a Parliament (P.xxx)
     """
     for template_row, (metric_name, year) in ROW_MAP.items():
         actual_row = template_row + row_offset
         year_data  = metrics_by_year.get(str(year), {})
         val        = year_data.get(metric_name, "n.a")
-        write_cell(ws, actual_row, col_idx, val, decimals=ROUND_DECIMALS)
+        write_cell(ws, actual_row, col_idx, val,
+                   decimals=ROUND_DECIMALS, bold=bold)

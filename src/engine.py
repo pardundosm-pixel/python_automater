@@ -206,10 +206,15 @@ def generate_jadual_for_state(state_name: str,
             locations = parse_header_locations(ws, header_row=page_header_row)
             for loc in locations:
                 if loc["kind"] == "negeri":
-                    continue  # state cell is a label only — no data column
+                    metrics = fetch_metrics_for_location(loc, state_code)
+                    mapper(ws, loc["col"], metrics, row_offset=row_offset, bold=True)
+                    total_populated += 1
+                    continue
 
                 metrics = fetch_metrics_for_location(loc, state_code)
-                mapper(ws, loc["col"], metrics, row_offset=row_offset)
+                mapper(ws, loc["col"], metrics,
+                       row_offset=row_offset,
+                       bold=(loc["kind"] == "parlimen"))   # ← NEW
                 total_populated += 1
 
             # 2. Re-apply bilingual rich text to the two label cells

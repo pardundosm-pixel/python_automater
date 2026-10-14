@@ -51,6 +51,8 @@ Thumbs.db
 # Stage 2 output: {State}/Jadual N.xlsx with data injected
 output_final/
 
+# Stage 1 output: {State}/Jadual N.xlsx with locations injected
+output_with_locations/
+
 # Legacy / scratch
 output/
-output_with_locations/   # uncomment if you also want to skip Stage-1 output

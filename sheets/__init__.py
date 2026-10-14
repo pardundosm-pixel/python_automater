@@ -31,6 +31,7 @@ FONT_NAME = "Century Gothic"
 FONT_SIZE = 11
 
 CELL_FONT       = Font(name=FONT_NAME, size=FONT_SIZE)
+CELL_FONT_BOLD = Font(name=FONT_NAME, size=FONT_SIZE, bold=True)
 CELL_ALIGN      = Alignment(horizontal="right", vertical="top",   wrap_text=False)
 BILINGUAL_ALIGN = Alignment(horizontal="left",  vertical="center", wrap_text=True)
 
@@ -69,11 +70,13 @@ def _format_value(val, decimals: int | None) -> int | float | str:
 # ==========================================
 # CELL WRITER
 # ==========================================
-def write_cell(ws, row: int, col: int, value, decimals: int | None = 1) -> None:
+def write_cell(ws, row: int, col: int, value,
+               decimals: int | None = 1,
+               bold: bool = False) -> None:
     """Write value + standard font/alignment + universal rounding."""
     cell = ws.cell(row=row, column=col)
     cell.value     = _format_value(value, decimals)
-    cell.font      = CELL_FONT
+    cell.font      = CELL_FONT_BOLD if bold else CELL_FONT
     cell.alignment = CELL_ALIGN
 
 
