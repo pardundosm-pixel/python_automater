@@ -1,3 +1,16 @@
+"""
+config/settings.py
+==================
+Central configuration for the Subnasional report pipeline.
+
+Stage 1 (location_injection_batch.py):
+    TEMPLATES_DIR           →  master jadual templates (pure, no data)
+    OUTPUT_LOCATIONS_DIR    →  per-state copies with locations injected
+
+Stage 2 (run_factory.py):
+    OUTPUT_LOCATIONS_DIR    →  input
+    OUTPUT_FINAL_DIR        →  per-state copies with locations + data
+"""
 import os
 
 # ==========================================
@@ -5,26 +18,38 @@ import os
 # ==========================================
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+
 # ==========================================
-# TEMPLATE SOURCES
+# STAGE 1 — TEMPLATE SOURCES
 # ==========================================
-# Master jadual templates (pure: no locations, no data).
-# One .xlsx per jadual. Consumed by Stage 1 (location_injection_batch.py).
+# Master jadual templates (one .xlsx per jadual, no locations, no data).
 TEMPLATES_DIR = "/Users/akmalhakim/Downloads/_NBDAC/Subnasional/template_generator/1_template_automation/output_v2"
 
 
 # ==========================================
-# PIPELINE STAGING
+# STAGE 2 — PIPELINE STAGING
 # ==========================================
-# Stage 1 output: {state}/Jadual N.xlsx   (locations injected, data empty)
+# Stage 1 output: {State}/Jadual N.xlsx  (locations injected, data empty)
 OUTPUT_LOCATIONS_DIR = "/Users/akmalhakim/Downloads/_NBDAC/Subnasional/template_generator/2_location_injector/output_with_locations"
 
-# Stage 2 output: {state}/Jadual N.xlsx   (locations + data)
+# Stage 2 output: {State}/Jadual N.xlsx  (locations + data filled)
 OUTPUT_FINAL_DIR = os.path.join(BASE_DIR, 'output_final')
 
 
 # ==========================================
-# LEGACY  (kept only so the deferred pdf_compiler.py still imports)
-# TODO: remove once pdf_compiler.py is rewritten.
+# SHARED LAYOUT CONSTANTS
+# (must match location_injection_batch.py)
+# ==========================================
+ROWS_PER_PAGE = 50   # vertical stride between stacked page blocks
+KATEGORI_ROW  = 6    # row where the location header lives (within page 1)
+COL_B         = 2    # label column ("MAKLUMAT ASAS")
+COL_C         = 3    # year column (when present)
+COL_D         = 4    # first location column when a year column exists
+COL_L         = 12   # rightmost location column
+
+
+# ==========================================
+# LEGACY — only imported by pdf_compiler.py (deferred)
+# TODO: remove together with the pdf_compiler.py rewrite
 # ==========================================
 OUTPUT_DIR = os.path.join(BASE_DIR, 'output')
