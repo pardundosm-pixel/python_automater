@@ -1,0 +1,56 @@
+# ==========================================
+# PYTHON
+# ==========================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# ==========================================
+# IDE / OS
+# ==========================================
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# ==========================================
+# EXCEL / OFFICE TEMP FILES
+# ==========================================
+~$*.xlsx
+~$*.xls
+~$*.docx
+~$*.pptx
+
+# ==========================================
+# PROJECT OUTPUTS  (regenerable — do not commit)
+# ==========================================
+# Stage 2 output: {State}/Jadual N.xlsx with data injected
+output_final/
+
+# Legacy / scratch
+output/
+output_with_locations/   # uncomment if you also want to skip Stage-1 output
