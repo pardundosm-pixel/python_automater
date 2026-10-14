@@ -3,18 +3,32 @@ src/engine.py
 =============
 Stage-2 orchestrator: inject metric values into one jadual file for one state.
 
-Design
-------
-* Plugin registry keyed by JADUAL NUMBER (not sheet-name prefix).
-* Each `sheets/jadual_N.py` must expose:
-      JADUAL_NUMBER   : int
-      populate_column : (ws, col_idx, metrics_by_year, row_offset=0) -> None
-* A single jadual file may contain MULTIPLE stacked page blocks
-  (Stage 1 packs different parlimen groups on each page).
-* Locations (columns) differ per page, so the engine re-parses the
-  header row of each page independently.
-* Row layout is identical on every page → mappers only need a single
-  ROW_MAP (page-1 rows), and the engine passes a `row_offset` per page.
+Two mapper modes
+----------------
+The engine discovers mappers by scanning `sheets/jadual_*.py`. Each mapper
+declares exactly ONE of:
+
+    populate_column = make_populate_location(ROW_MAP, ROUND_DECIMALS)
+        → columns are LOCATIONS (P.140, N.01, …)
+        → engine calls it once per location column, per page
+
+    populate_page   = make_populate_year(ROW_MAP, ROUND_DECIMALS)
+        → columns are YEARS (2020, 2021, …)
+        → engine calls it once per page, with the whole column-map
+
+Both modes share:
+    JADUAL_NUMBER : int   (required)
+
+Page handling
+-------------
+A jadual file may contain MULTIPLE stacked page blocks (Stage 1 packs a
+different set of locations on each page). Each page's header row is parsed
+independently, so column layouts may differ per page. Row layout is
+identical on every page → mappers declare page-1 rows only, and the engine
+adds `row_offset` for pages 2, 3, …
+
+Files whose name doesn't start with `jadual_` (e.g. `_base_template.py`)
+are never scanned.
 """
 import os
 import re
@@ -27,15 +41,15 @@ from config.settings import (
     COL_B, COL_C, COL_D, COL_L,
 )
 from src.data_provider import get_metrics_dict
-from sheets import apply_bilingual_rich_formatting
 
 
 # ==========================================
-# 1. PLUGIN REGISTRY
+# 1. PLUGIN REGISTRY  (dual-mode)
 # ==========================================
 import sheets  # requires sheets/__init__.py
 
-MASTER_REGISTRY: dict[int, callable] = {}
+LOCATION_REGISTRY: dict[int, callable] = {}   # jadual → populate_column
+YEAR_REGISTRY:     dict[int, callable] = {}   # jadual → populate_page
 
 print("[ENGINE] Discovering jadual mappers...")
 for _, module_name, is_pkg in pkgutil.iter_modules(sheets.__path__):
@@ -43,14 +57,28 @@ for _, module_name, is_pkg in pkgutil.iter_modules(sheets.__path__):
         continue
 
     mod = importlib.import_module(f"sheets.{module_name}")
-    if not hasattr(mod, "JADUAL_NUMBER") or not hasattr(mod, "populate_column"):
-        print(f"  [skip] {module_name}: missing JADUAL_NUMBER or populate_column")
+
+    # Skip placeholder / unfinished mappers
+    if not hasattr(mod, "JADUAL_NUMBER"):
+        print(f"  [skip] {module_name}: JADUAL_NUMBER not defined")
+        continue
+    if mod.JADUAL_NUMBER is None:
+        print(f"  [skip] {module_name}: JADUAL_NUMBER is None (not configured)")
         continue
 
-    MASTER_REGISTRY[int(mod.JADUAL_NUMBER)] = mod.populate_column
-    print(f"  loaded sheets/{module_name}.py  →  Jadual {mod.JADUAL_NUMBER}")
+    num = int(mod.JADUAL_NUMBER)
 
-print(f"[ENGINE] {len(MASTER_REGISTRY)} jadual mapper(s) registered.\n")
+    if hasattr(mod, "populate_column"):
+        LOCATION_REGISTRY[num] = mod.populate_column
+        print(f"  loaded sheets/{module_name}.py  →  Jadual {num}  [location-mode]")
+    elif hasattr(mod, "populate_page"):
+        YEAR_REGISTRY[num] = mod.populate_page
+        print(f"  loaded sheets/{module_name}.py  →  Jadual {num}  [year-mode]")
+    else:
+        print(f"  [skip] {module_name}: no populate_column or populate_page")
+
+print(f"[ENGINE] {len(LOCATION_REGISTRY)} location-mapper(s), "
+      f"{len(YEAR_REGISTRY)} year-mapper(s) registered.\n")
 
 
 # ==========================================
@@ -58,8 +86,9 @@ print(f"[ENGINE] {len(MASTER_REGISTRY)} jadual mapper(s) registered.\n")
 # ==========================================
 def detect_location_start_col(ws, header_row: int = KATEGORI_ROW) -> int:
     """
-    If column C's header contains 'Tahun'/'Year', the jadual has a year
-    column and locations start at column D. Otherwise they start at C.
+    For location-mode jaduals: if column C's header contains 'Tahun'/'Year',
+    the jadual has a year column and locations start at column D.
+    Otherwise locations start at C.
     """
     c_val = ws.cell(row=header_row, column=COL_C).value
     has_year = c_val is not None and "tahun" in str(c_val).lower()
@@ -120,6 +149,25 @@ def parse_header_locations(ws,
     return locations
 
 
+def parse_header_years(ws,
+                       header_row: int = KATEGORI_ROW,
+                       start_col: int = COL_C,
+                       end_col: int = COL_L) -> dict[int, str]:
+    """
+    For year-mode jaduals: walk the header row and return {col_idx: year_str}.
+    Skips blanks. Starts scanning at column C by default.
+    """
+    col_map: dict[int, str] = {}
+    for col in range(start_col, end_col + 1):
+        val = ws.cell(row=header_row, column=col).value
+        if val is None:
+            continue
+        text = str(val).strip()
+        if text:
+            col_map[col] = text
+    return col_map
+
+
 def detect_page_header_rows(ws) -> list[int]:
     """
     Return absolute row numbers of every page-header in the sheet.
@@ -176,17 +224,20 @@ def generate_jadual_for_state(state_name: str,
                               input_path: str,
                               output_path: str) -> str:
     """
-    Load one Stage-1 jadual file, populate every location column across
-    every page, and save to output_path.
+    Load one Stage-1 jadual file, populate it across every page,
+    and save to output_path.
 
     Returns a status string starting with ✅ (success) or ❌ (failure).
     """
+    from sheets import apply_bilingual_rich_formatting  # avoid top-level import cycle
+
     jadual_num = extract_jadual_number(jadual_filename)
     if jadual_num is None:
         return f"❌ Cannot parse jadual number from '{jadual_filename}'"
 
-    mapper = MASTER_REGISTRY.get(jadual_num)
-    if mapper is None:
+    in_location_mode = jadual_num in LOCATION_REGISTRY
+    in_year_mode     = jadual_num in YEAR_REGISTRY
+    if not (in_location_mode or in_year_mode):
         return f"❌ No mapper registered for Jadual {jadual_num}"
 
     wb = None
@@ -199,29 +250,37 @@ def generate_jadual_for_state(state_name: str,
             return f"❌ No page header found in {jadual_filename}"
 
         total_populated = 0
+
         for page_header_row in page_headers:
             row_offset = page_header_row - KATEGORI_ROW     # 0, 50, 100, …
 
-            # 1. Inject metrics into every location column on this page
-            locations = parse_header_locations(ws, header_row=page_header_row)
-            for loc in locations:
-                if loc["kind"] == "negeri":
+            # ---- Dispatch by mode ----
+            if in_location_mode:
+                mapper = LOCATION_REGISTRY[jadual_num]
+                locations = parse_header_locations(ws, header_row=page_header_row)
+
+                for loc in locations:
+                    if loc["kind"] == "negeri":
+                        continue  # state cell is a label only — no data column
+
                     metrics = fetch_metrics_for_location(loc, state_code)
-                    mapper(ws, loc["col"], metrics, row_offset=row_offset, bold=True)
+                    mapper(ws, loc["col"], metrics,
+                           row_offset=row_offset,
+                           bold=(loc["kind"] == "parlimen"))
                     total_populated += 1
-                    continue
 
-                metrics = fetch_metrics_for_location(loc, state_code)
-                mapper(ws, loc["col"], metrics,
-                       row_offset=row_offset,
-                       bold=(loc["kind"] == "parlimen"))   # ← NEW
-                total_populated += 1
+            else:  # year-mode
+                mapper = YEAR_REGISTRY[jadual_num]
+                col_map = parse_header_years(ws, header_row=page_header_row)
+                state_metrics = get_metrics_dict(state_code, "negeri")
+                mapper(ws, col_map, state_metrics, row_offset=row_offset)
+                total_populated += len(col_map)
 
-            # 2. Re-apply bilingual rich text to the two label cells
-            #    B{page_header_row} always exists.
-            #    C{page_header_row} only when a year column is present.
+            # ---- Re-apply bilingual formatting on the label cells ----
             apply_bilingual_rich_formatting(ws, page_header_row, COL_B)
-            if detect_location_start_col(ws, page_header_row) == COL_D:
+            # Only location-mode jaduals have a "Tahun"/"Year" column in C.
+            # Year-mode jaduals use column C as the first data column.
+            if in_location_mode and detect_location_start_col(ws, page_header_row) == COL_D:
                 apply_bilingual_rich_formatting(ws, page_header_row, COL_C)
 
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
@@ -229,9 +288,10 @@ def generate_jadual_for_state(state_name: str,
         wb.close()
         wb = None
 
+        mode_tag = "location" if in_location_mode else "year"
         return (f"✅ {state_name}/{jadual_filename}  "
-                f"({total_populated} column(s) across "
-                f"{len(page_headers)} page(s))")
+                f"[{mode_tag}] {total_populated} cell-group(s) across "
+                f"{len(page_headers)} page(s)")
 
     except Exception as e:
         return f"❌ FAILED {state_name}/{jadual_filename} | {e}"

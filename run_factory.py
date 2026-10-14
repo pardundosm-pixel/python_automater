@@ -22,7 +22,7 @@ python3 run_factory.py --state Johor Melaka
 python3 run_factory.py --jadual 1
 
 # Johor, only Jadual 1 and 5
-python3 run_factory.py --state Johor --jadual 1 5
+python3 run_factory.py --state Johor --jadual 1 2
 
 # Preview the task list without executing
 python3 run_factory.py --dry-run

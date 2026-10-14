@@ -9,32 +9,18 @@ jadual (page-1 rows); the engine adds `row_offset` for stacked pages.
 
 Row layout (page 1)
 -------------------
-  8  Luas kawasan (km²)          2023
-  9  Luas kawasan (km²)          2024
- 10  Luas kawasan (km²)          2025
- 12  Jumlah penduduk ('000)      2023
- 13  Jumlah penduduk ('000)      2024
- 14  Jumlah penduduk ('000)      2025
- 16  Kepadatan penduduk (per km²) 2023
- 17  Kepadatan penduduk (per km²) 2024
- 18  Kepadatan penduduk (per km²) 2025
- 20  Jumlah pemilih              PRU-14
- 21  Jumlah pemilih              PRU-15
- 23  Jumlah undian oleh pemilih  PRU-14
- 24  Jumlah undian oleh pemilih  PRU-15
- 26  Jumlah kertas undi ditolak  PRU-14
- 27  Jumlah kertas undi ditolak  PRU-15
- 29  Kertas undi dikeluarkan tetapi tidak dimasukkan / tidak dikembalikan  PRU-14
- 30  (same)                                                                 PRU-15
- 32  Jumlah kertas undi yang dikeluarkan dalam pengundian  PRU-14
- 33  (same)                                                PRU-15
+    8  Luas kawasan (km²)          2023
+    9  Luas kawasan (km²)          2024
+    10  Luas kawasan (km²)          2025
+    ...
+    33  (same)                                                PRU-15
 
 Metric strings must match a value of `kategori_metrik` in the fact tables.
 Verify with:
     >>> from src.data_loader import db
     >>> sorted(db.fact_parlimen['kategori_metrik'].unique())
 """
-from sheets import write_cell
+from sheets._base_template import make_populate_location
 
 JADUAL_NUMBER = 1
 ROUND_DECIMALS = 1
@@ -84,22 +70,4 @@ ROW_MAP: dict[int, tuple[str, str]] = {
 # ==========================================
 # COLUMN WRITER
 # ==========================================
-def populate_column(ws, col_idx: int, metrics_by_year: dict,
-                    row_offset: int = 0, bold: bool = False):
-    """
-    Write one location's values into `col_idx`.
-
-    Parameters
-    ----------
-    ws               : openpyxl worksheet
-    col_idx          : absolute column index to write into
-    metrics_by_year  : {year_str: {metric_name: value}}
-    row_offset       : 0 for page 1, +50 for page 2, +100 for page 3, …
-    bold             : True if this column is a Parliament (P.xxx)
-    """
-    for template_row, (metric_name, year) in ROW_MAP.items():
-        actual_row = template_row + row_offset
-        year_data  = metrics_by_year.get(str(year), {})
-        val        = year_data.get(metric_name, "n.a")
-        write_cell(ws, actual_row, col_idx, val,
-                   decimals=ROUND_DECIMALS, bold=bold)
+populate_column = make_populate_location(ROW_MAP, ROUND_DECIMALS)
