@@ -11,9 +11,9 @@ Row layout (page 1)
 -------------------
     8  Luas kawasan (km²)          2023
     9  Luas kawasan (km²)          2024
-    10  Luas kawasan (km²)          2025
-    ...
-    33  (same)                                                PRU-15
+   10  Luas kawasan (km²)          2025
+   ...
+   33  (same)                                                PRU-15
 
 Metric strings must match a value of `kategori_metrik` in the fact tables.
 Verify with:
@@ -22,7 +22,7 @@ Verify with:
 """
 from sheets._base_template import make_populate_location
 
-JADUAL_NUMBER = 1
+JADUAL_NUMBER  = "1"        # string — matches filenames like "Jadual 1.xlsx"
 ROUND_DECIMALS = 1
 
 
@@ -66,6 +66,7 @@ ROW_MAP: dict[int, tuple[str, str]] = {
     32: ("jumlah_kertas_undi_yang_dikeluarkan_dalam_pengundian", "PRU-14"),
     33: ("jumlah_kertas_undi_yang_dikeluarkan_dalam_pengundian", "PRU-15"),
 }
+
 
 # ==========================================
 # COLUMN WRITER

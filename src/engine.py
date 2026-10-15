@@ -12,12 +12,12 @@ declares exactly ONE of:
         → columns are LOCATIONS (P.140, N.01, …)
         → engine calls it once per location column, per page
 
-    populate_page   = make_populate_year(ROW_MAP, ROUND_DECIMALS)
-        → columns are YEARS (2020, 2021, …)
-        → engine calls it once per page, with the whole column-map
+    populate_page   = make_populate_year(ROW_MAP, TARGET_YEARS, ROUND_DECIMALS)
+        → columns are YEARS (right-aligned from COL_L)
+        → engine calls it once per page, with the state's metrics
 
 Both modes share:
-    JADUAL_NUMBER : int   (required)
+    JADUAL_NUMBER : str   (required — string, so "1", "2", "2.1" all work)
 
 Page handling
 -------------
@@ -48,8 +48,8 @@ from src.data_provider import get_metrics_dict
 # ==========================================
 import sheets  # requires sheets/__init__.py
 
-LOCATION_REGISTRY: dict[int, callable] = {}   # jadual → populate_column
-YEAR_REGISTRY:     dict[int, callable] = {}   # jadual → populate_page
+LOCATION_REGISTRY: dict[str, callable] = {}   # jadual → populate_column
+YEAR_REGISTRY:     dict[str, callable] = {}   # jadual → populate_page
 
 print("[ENGINE] Discovering jadual mappers...")
 for _, module_name, is_pkg in pkgutil.iter_modules(sheets.__path__):
@@ -66,6 +66,7 @@ for _, module_name, is_pkg in pkgutil.iter_modules(sheets.__path__):
         print(f"  [skip] {module_name}: JADUAL_NUMBER is None (not configured)")
         continue
 
+    # Always normalise to string so filenames like "Jadual 2.1.xlsx" match
     num = str(mod.JADUAL_NUMBER)
 
     if hasattr(mod, "populate_column"):
@@ -147,25 +148,6 @@ def parse_header_locations(ws,
             })
 
     return locations
-
-
-def parse_header_years(ws,
-                       header_row: int = KATEGORI_ROW,
-                       start_col: int = COL_C,
-                       end_col: int = COL_L) -> dict[int, str]:
-    """
-    For year-mode jaduals: walk the header row and return {col_idx: year_str}.
-    Skips blanks. Starts scanning at column C by default.
-    """
-    col_map: dict[int, str] = {}
-    for col in range(start_col, end_col + 1):
-        val = ws.cell(row=header_row, column=col).value
-        if val is None:
-            continue
-        text = str(val).strip()
-        if text:
-            col_map[col] = text
-    return col_map
 
 
 def detect_page_header_rows(ws) -> list[int]:
@@ -271,15 +253,14 @@ def generate_jadual_for_state(state_name: str,
 
             else:  # year-mode
                 mapper = YEAR_REGISTRY[jadual_num]
-                col_map = parse_header_years(ws, header_row=page_header_row)
                 state_metrics = get_metrics_dict(state_code, "negeri")
-                mapper(ws, col_map, state_metrics, row_offset=row_offset)
-                total_populated += len(col_map)
+                written = mapper(ws, state_metrics, row_offset=row_offset)
+                total_populated += (written or 0)
 
             # ---- Re-apply bilingual formatting on the label cells ----
             apply_bilingual_rich_formatting(ws, page_header_row, COL_B)
             # Only location-mode jaduals have a "Tahun"/"Year" column in C.
-            # Year-mode jaduals use column C as the first data column.
+            # Year-mode jaduals use column C as a data column.
             if in_location_mode and detect_location_start_col(ws, page_header_row) == COL_D:
                 apply_bilingual_rich_formatting(ws, page_header_row, COL_C)
 

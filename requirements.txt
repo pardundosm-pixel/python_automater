@@ -3,3 +3,4 @@ xlwings
 openpyxl
 rapidfuzz
 pypdf
+pyarrow

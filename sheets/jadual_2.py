@@ -12,10 +12,10 @@ Row layout (page 1)
 """
 from sheets._base_template import make_populate_year
 
-JADUAL_NUMBER  = 2
+JADUAL_NUMBER  = "2"        # string — matches filenames like "Jadual 2.xlsx"
 ROUND_DECIMALS = 1
 
-# Define the years to extract. 
+# Define the years to extract.
 # The engine will place the last item ("2023") in COL_L, "2022" in COL_K, etc.
 TARGET_YEARS = ["2021", "2022", "2023"]
 
@@ -25,5 +25,5 @@ ROW_MAP: dict[int, str] = {
     12: "luas_kawasan",
 }
 
-# Use the new factory
+# Use the factory
 populate_page = make_populate_year(ROW_MAP, TARGET_YEARS, ROUND_DECIMALS)
