@@ -1,9 +1,7 @@
-# data_provider.py (with query caching)
+# data_provider.py (added logging prints)
 import pandas as pd
-from functools import lru_cache
 from src.data_loader import db
 
-@lru_cache(maxsize=128)
 def get_location_hierarchy(parlimen_code: str):
     """Fetches Parliament details and its nested DUNs from dim_geografi."""
     print(f"[DATA] Fetching location hierarchy for parl_code: {parlimen_code}")
@@ -33,7 +31,6 @@ def get_location_hierarchy(parlimen_code: str):
         'duns': duns
     }
 
-@lru_cache(maxsize=256)
 def get_metrics_dict(location_code: str, level: str, parent_code: str = None):
     """
     Fetches metrics for a location and formats them into a nested dictionary by year.
@@ -139,39 +136,6 @@ def get_metrics_dict(location_code: str, level: str, parent_code: str = None):
         if parent_code:
             parent_target = _norm_negeri_code(parent_code)
             mask = mask & (df['kod_negeri'].apply(_norm_negeri_code) == parent_target)
-
-    elif level == 'meteorologi':
-        dim_df = db.dim_meteorologi
-        fact_df = db.fact_meteorologi
-        
-        # 1. Search for the station by its name (stesen) case-insensitively
-        target_name = str(location_code).strip().lower()
-        dim_mask = dim_df['stesen'].astype(str).str.strip().str.lower() == target_name
-        
-        # 2. Lock the search to the specific state to prevent cross-state collisions
-        if parent_code:
-            target_state = _norm_negeri_code(parent_code)
-            dim_mask = dim_mask & (dim_df['kod_negeri'].apply(_norm_negeri_code) == target_state)
-            
-        dim_subset = dim_df[dim_mask]
-        
-        if dim_subset.empty:
-            print(f"[DATA] Error: Station '{location_code}' not found in dim_meteorologi for state '{parent_code}'.")
-            return {}
-            
-        # 3. Extract the exact kod_stesen and kod_negeri from the dimension table
-        # FIX: Manually normalize the single scalar string instead of using the Pandas _norm() function
-        raw_stesen = str(dim_subset.iloc[0]['kod_stesen']).strip()
-        target_kod_stesen = raw_stesen[:-2] if raw_stesen.endswith('.0') else raw_stesen
-        
-        target_kod_negeri = _norm_negeri_code(dim_subset.iloc[0]['kod_negeri'])
-        
-        # 4. Build the final mask for the fact table using BOTH codes
-        # We can still use _norm() here because fact_df['kod_stesen'] is a full Pandas Series
-        mask = (_norm(fact_df['kod_stesen']) == target_kod_stesen) & \
-                (fact_df['kod_negeri'].apply(_norm_negeri_code) == target_kod_negeri)
-            
-        df = fact_df  # Assign back to df so the rest of the function can process it
     
     else:
         print(f"[DATA] Unknown level '{level}' - returning empty")
@@ -193,7 +157,6 @@ def get_metrics_dict(location_code: str, level: str, parent_code: str = None):
     print(f"[DATA] Retrieved metrics for {len(metrics_by_year)} year(s) for {location_code}")
     return metrics_by_year
 
-@lru_cache(maxsize=128)
 def get_dun_hierarchy(dun_code: str, parent_parl_code: str = None):
     """Fetches DUN details and its parent Parliament safely using strict matching."""
     print(f"[DATA] Fetching DUN hierarchy for dun_code: {dun_code}, parent_parl_code: {parent_parl_code}")
@@ -222,7 +185,6 @@ def get_dun_hierarchy(dun_code: str, parent_parl_code: str = None):
     print(f"[DATA] Found DUN: {result['dun_name']} under {result['parent_parl_name']}")
     return result
 
-@lru_cache(maxsize=64)
 def get_negeri_hierarchy(state_code: str):
     """Fetches State details and its nested Districts from the dim_daerah sheet."""
     print(f"[DATA] Fetching location hierarchy for state_code: {state_code}")
@@ -248,12 +210,12 @@ def get_negeri_hierarchy(state_code: str):
         daerah_mask = dim_daerah['kod_negeri'].astype(str).str.replace(r'\.0$', '', regex=True).str.zfill(2) == clean_target
         daerah_subset = dim_daerah[daerah_mask]
         
-        # Extract the district codes and names using the new official district columns
-        districts_raw = daerah_subset[['kod_daerah_pentadbiran', 'daerah_pentadbiran']].drop_duplicates().dropna().to_dict('records')
+        # Extract the district codes and names
+        districts_raw = daerah_subset[['kod_daerah', 'nama_daerah']].drop_duplicates().dropna().to_dict('records')
         
         # Filter out empty or "n.a." values
-        districts = [{'code': d['kod_daerah_pentadbiran'], 'name': d['daerah_pentadbiran']} 
-                        for d in districts_raw if str(d['kod_daerah_pentadbiran']).lower() not in ['n.a.', 'n.a', 'na']]
+        districts = [{'code': d['kod_daerah'], 'name': d['nama_daerah']} 
+                        for d in districts_raw if str(d['kod_daerah']).lower() not in ['n.a.', 'n.a', 'na']]
     else:
         print("[DATA] Warning: 'dim_daerah' sheet not found in the database. Returning empty district list.")
         districts = []
@@ -265,8 +227,6 @@ def get_negeri_hierarchy(state_code: str):
         'districts': districts
     }
 
-# The following functions are not cached in the provided example, but you may add caching if needed.
-# For consistency with the example, we leave them as is.
 def get_pdrm_hierarchy(state_code: str):
     """Fetches unique Police Districts (Daerah PDRM) for a given state from the isolated dim_daerah_pdrm table."""
     print(f"[DATA] Fetching PDRM hierarchy for state_code: {state_code}")
@@ -289,6 +249,7 @@ def get_pdrm_hierarchy(state_code: str):
     print(f"[DATA] Found {len(pdrm_districts)} PDRM Districts.")
     return pdrm_districts
 
+
 def get_jkm_hierarchy(state_code: str):
     """Fetches unique Social Welfare Branches (Cawangan JKM) for a given state from the isolated dim_cawangan_jkm table."""
     print(f"[DATA] Fetching JKM hierarchy for state_code: {state_code}")
@@ -310,32 +271,3 @@ def get_jkm_hierarchy(state_code: str):
                     
     print(f"[DATA] Found {len(jkm_branches)} JKM Branches.")
     return jkm_branches
-
-def get_meteorologi_hierarchy(state_code: str):
-    """Fetches unique Meteorological Stations for a given state from the isolated dim_meteorologi table."""
-    print(f"[DATA] Fetching Meteorologi hierarchy for state_code: {state_code}")
-    dim_met = db.dim_meteorologi
-    
-    if dim_met is None or dim_met.empty:
-        print("[DATA] Warning: 'dim_meteorologi' sheet not found.")
-        return []
-        
-    clean_target = str(state_code).zfill(2)
-    met_mask = dim_met['kod_negeri'].astype(str).str.replace(r'\.0$', '', regex=True).str.zfill(2) == clean_target
-    met_subset = dim_met[met_mask]
-    
-    # Extract unique stations along with their administrative district
-    met_raw = met_subset[['kod_stesen', 'stesen', 'kod_daerah_pentadbiran', 'daerah_pentadbiran']].drop_duplicates().dropna(subset=['stesen']).to_dict('records')
-    
-    met_stations = [
-        {
-            'code': d['kod_stesen'], 
-            'name': d['stesen'],
-            'daerah_code': d.get('kod_daerah_pentadbiran', 'n.a.'),
-            'daerah_name': d.get('daerah_pentadbiran', 'n.a.')
-        } 
-        for d in met_raw if str(d['kod_stesen']).lower() not in ['n.a.', 'n.a', 'na']
-    ]
-
-    print(f"[DATA] Found {len(met_stations)} Meteorologi Stations.")
-    return met_stations
