@@ -1,41 +1,49 @@
+"""
+run_factory.py
+==============
+Data injection factory — Stage 2 of the pipeline.
+
+Reads Stage-1 output from OUTPUT_LOCATIONS_DIR/{State}/Jadual N.xlsx,
+injects metric values into each location column, writes to
+OUTPUT_FINAL_DIR/{State}/Jadual N.xlsx.
+
+Examples
+--------
+# Run EVERYTHING (all states, all jaduals)
+python3 run_factory.py
+
+# Only Johor, all jaduals
+python3 run_factory.py --state Johor
+
+# Johor + Melaka, all jaduals
+python3 run_factory.py --state Johor Melaka
+
+# Only Jadual 1, all states
+python3 run_factory.py --jadual 1
+
+# Johor, only Jadual 1 and 5
+python3 run_factory.py --state Johor --jadual 1 2
+
+# Preview the task list without executing
+python3 run_factory.py --dry-run
+"""
+
 import os
-import xlwings as xw
+import sys
+import time
+import argparse
+from collections import Counter
 from concurrent.futures import ProcessPoolExecutor, as_completed
-from src.engine import generate_report
-from src.data_loader import db
+from tqdm import tqdm
 
-# ==========================================
-# FACTORY CONFIGURATION
-# ==========================================
-MAX_PARALLEL_WORKERS = 5  # Safe sweet spot for COM stability
-TARGET_TEMPLATE = "parlimen_dun" 
-# For testing safely, we will only run 2 states instead of all 16
-# Change this back to [str(i).zfill(2) for i in range(1, 17)] for full production
-TEST_STATES = ["01", "02"] # Johor and Melaka
+from config.settings import OUTPUT_LOCATIONS_DIR, OUTPUT_FINAL_DIR
+from src.engine import generate_jadual_for_state, extract_jadual_number
 
-
-def get_parliaments_for_state(state_code: str):
-    """Fetches all unique Parliament codes for a specific State."""
-    geo_df = db.dim_geo
-    clean_db_codes = geo_df['kod_negeri'].astype(str).str.replace(r'\.0$', '', regex=True).str.zfill(2)
-    clean_target = str(state_code).zfill(2)
-    mask = clean_db_codes == clean_target
-    return geo_df[mask]['kod_parlimen'].dropna().unique().tolist()
-
-
-def get_duns_for_state(state_code: str):
-    """Fetches all unique DUNs for a specific State paired with parent Parliament."""
-    geo_df = db.dim_geo
-    clean_db_codes = geo_df['kod_negeri'].astype(str).str.replace(r'\.0$', '', regex=True).str.zfill(2)
-    clean_target = str(state_code).zfill(2)
-    
-    mask = (clean_db_codes == clean_target) & (geo_df['kod_dun'].str.lower() != 'n.a.')
-    subset = geo_df[mask][['kod_dun', 'kod_parlimen']].dropna().drop_duplicates()
-    return subset.to_dict('records')
+MAX_CORES = max(1, os.cpu_count() - 2)
 
 
 # ==========================================
-# THE ISOLATED WORKER FUNCTION
+# STATE LOOKUP  (folder name → 2-digit code)
 # ==========================================
 def build_state_code_map():
     """{'Johor': '01', 'Melaka': '02', ...} from dim_geo."""
@@ -65,8 +73,8 @@ def parse_args():
              "Default: every folder found in OUTPUT_LOCATIONS_DIR.",
     )
     p.add_argument(
-        "--jadual", nargs="+", type=str, default=None, metavar="N",
-        help="Target jadual number(s), e.g. --jadual 1 5 2.1. "
+        "--jadual", nargs="+", type=int, default=None, metavar="N",
+        help="Target jadual number(s), e.g. --jadual 1 5 13. "
              "Default: every jadual found in each state folder.",
     )
     p.add_argument(
@@ -142,82 +150,80 @@ def build_flat_queue(target_states=None, target_jaduals=None):
 # ==========================================
 def worker(task):
     try:
-        success_count = 0
-        
-        # ------------------------------------------------
-        # ROUTE 1: NEGERI REPORT (1 State = 1 Report)
-        # ------------------------------------------------
-        if template_key == "negeri":
-            generate_report(
-                location_code=state_code, 
-                report_type='negeri', 
-                excel_app=app,
-                template_key=template_key
-            )
-            return f"✅ [State {state_code}] Successfully generated 1 Negeri Report."
-            
-        # ------------------------------------------------
-        # ROUTE 2: PARLIMEN & DUN REPORTS (1 State = Many Reports)
-        # ------------------------------------------------
-        elif template_key == "parlimen_dun":
-            target_parlimen = get_parliaments_for_state(state_code)
-            target_duns = get_duns_for_state(state_code)
-            
-            # Generate all Parliament Reports for this state
-            for parl in target_parlimen:
-                generate_report(
-                    location_code=parl, 
-                    report_type='parlimen', 
-                    excel_app=app,
-                    template_key=template_key
-                )
-                success_count += 1
-                
-            # Generate all DUN Reports for this state
-            for dun_info in target_duns:
-                generate_report(
-                    location_code=dun_info['kod_dun'], 
-                    report_type='dun', 
-                    excel_app=app, 
-                    parent_code=dun_info['kod_parlimen'],
-                    template_key=template_key
-                )
-                success_count += 1
-                
-            return f"✅ [State {state_code}] Successfully generated {success_count} Parlimen & DUN reports."
-            
-        else:
-            return f"❌ [State {state_code}] FAILED: Unknown template key '{template_key}'"
-            
+        msg = generate_jadual_for_state(
+            state_name      = task["state_name"],
+            state_code      = task["state_code"],
+            jadual_filename = task["jadual_file"],
+            input_path      = task["input_path"],
+            output_path     = task["output_path"],
+        )
+        return msg.startswith("✅"), msg
     except Exception as e:
-        return f"❌ [State {state_code}] FAILED with error: {e}"
-        
-    finally:
-        # GUARANTEE the hidden Excel app is killed
-        try:
-            app.quit()
-        except:
-            pass
+        return False, f"❌ CRASH {task['state_name']}/{task['jadual_file']}: {e}"
 
 
 # ==========================================
-# MAIN DISPATCHER
+# MAIN
 # ==========================================
 if __name__ == "__main__":
-    print(f"=============================================")
-    print(f"Starting Multi-Process Factory for: {TARGET_TEMPLATE}")
-    print(f"Spinning up parallel Excel workers...")
-    print(f"=============================================\n")
-    
-    with ProcessPoolExecutor(max_workers=MAX_PARALLEL_WORKERS) as executor:
-        
-        # Submit the test states to the pool
-        futures = {executor.submit(process_single_state, state, TARGET_TEMPLATE): state for state in TEST_STATES}
-        
-        for future in as_completed(futures):
-            result_message = future.result()
-            print(result_message)
-            
-    print("\n=============================================")
-    print("Batch Processing Complete! All workers shut down safely.")
-    print("=============================================")
+    args = parse_args()
+    start = time.time()
+
+    print("=" * 60)
+    print("🚀 DATA INJECTION FACTORY (Stage 2)")
+    print("=" * 60)
+    print(f"  States  : {args.state if args.state else 'ALL'}")
+    print(f"  Jaduals : {args.jadual if args.jadual else 'ALL'}")
+    print(f"  Cores   : {args.cores}")
+    print(f"  Input   : {OUTPUT_LOCATIONS_DIR}")
+    print(f"  Output  : {OUTPUT_FINAL_DIR}")
+    print("=" * 60 + "\n")
+
+    queue = build_flat_queue(
+        target_states=args.state,
+        target_jaduals=args.jadual,
+    )
+
+    if not queue:
+        print("⚠️  No tasks match the given filters.")
+        sys.exit(0)
+
+    per_state = Counter(t["state_name"] for t in queue)
+    print(f"📁 {len(queue)} task(s) queued across {len(per_state)} state(s):")
+    for state, n in sorted(per_state.items()):
+        print(f"     {state:<24} {n} jadual(s)")
+    print()
+
+    if args.dry_run:
+        print("🔎 --dry-run: task list only, nothing executed.")
+        for t in queue[:20]:
+            print(f"     {t['state_name']}/{t['jadual_file']}")
+        if len(queue) > 20:
+            print(f"     ... and {len(queue) - 20} more")
+        sys.exit(0)
+
+    success, fail = 0, 0
+    failed_tasks = []
+
+    with ProcessPoolExecutor(max_workers=args.cores) as ex:
+        futures = {ex.submit(worker, t): t for t in queue}
+        for fut in tqdm(as_completed(futures), total=len(queue),
+                        desc="Injecting data", unit="file"):
+            ok, msg = fut.result()
+            if ok:
+                success += 1
+            else:
+                fail += 1
+                failed_tasks.append(msg)
+                tqdm.write(msg)
+
+    print("\n" + "=" * 60)
+    print(f"🏁 Done in {(time.time() - start) / 60:.2f} min")
+    print(f"✅ {success} succeeded   ❌ {fail} failed")
+    if failed_tasks:
+        print("\nFailures:")
+        for m in failed_tasks[:20]:
+            print(f"  {m}")
+        if len(failed_tasks) > 20:
+            print(f"  ... and {len(failed_tasks) - 20} more")
+    print("=" * 60)
