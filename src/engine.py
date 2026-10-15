@@ -66,7 +66,7 @@ for _, module_name, is_pkg in pkgutil.iter_modules(sheets.__path__):
         print(f"  [skip] {module_name}: JADUAL_NUMBER is None (not configured)")
         continue
 
-    num = int(mod.JADUAL_NUMBER)
+    num = str(mod.JADUAL_NUMBER)
 
     if hasattr(mod, "populate_column"):
         LOCATION_REGISTRY[num] = mod.populate_column
@@ -190,10 +190,11 @@ def detect_page_header_rows(ws) -> list[int]:
     return headers
 
 
-def extract_jadual_number(filename: str) -> int | None:
-    """'Jadual 7.xlsx' → 7.  Accepts 'Jadual 7', 'Jadual_7', 'Jadual-7'."""
-    m = re.search(r"Jadual[\s_\-]+(\d+)", filename, re.IGNORECASE)
-    return int(m.group(1)) if m else None
+def extract_jadual_number(filename: str) -> str | None:
+    """'Jadual 7.xlsx' → '7'. 'Jadual 2.1.xlsx' → '2.1'."""
+    # Capture digits, an optional dot, and more digits
+    m = re.search(r"Jadual[\s_\-]+(\d+(?:\.\d+)?)", filename, re.IGNORECASE)
+    return m.group(1) if m else None
 
 
 # ==========================================
