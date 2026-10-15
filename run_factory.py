@@ -73,8 +73,8 @@ def parse_args():
              "Default: every folder found in OUTPUT_LOCATIONS_DIR.",
     )
     p.add_argument(
-        "--jadual", nargs="+", type=int, default=None, metavar="N",
-        help="Target jadual number(s), e.g. --jadual 1 5 13. "
+        "--jadual", nargs="+", type=str, default=None, metavar="N",
+        help="Target jadual number(s), e.g. --jadual 1 5 2.1. "
              "Default: every jadual found in each state folder.",
     )
     p.add_argument(

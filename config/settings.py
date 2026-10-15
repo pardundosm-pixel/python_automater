@@ -18,6 +18,8 @@ import os
 # ==========================================
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+# Data Paths
+DATABASE_PATH = os.path.join(BASE_DIR, 'data', 'normalized_database_2026_v2.xlsx')
 
 # ==========================================
 # STAGE 1 — TEMPLATE SOURCES
@@ -29,7 +31,7 @@ TEMPLATES_DIR = os.path.join(BASE_DIR, 'templates')
 # STAGE 2 — PIPELINE STAGING
 # ==========================================
 # Move intermediate outputs into a 'data/templates_with_locations' folder
-OUTPUT_LOCATIONS_DIR = os.path.join(BASE_DIR, 'data', 'templates_with_locations')
+OUTPUT_LOCATIONS_DIR = "/Users/akmalhakim/Downloads/_NBDAC/Subnasional/parlimen_dun/templates_with_locations"
 
 # Stage 2 output: {State}/Jadual N.xlsx  (locations + data filled)
 OUTPUT_FINAL_DIR = os.path.join(BASE_DIR, 'output_final')
