@@ -22,15 +22,14 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # ==========================================
 # STAGE 1 — TEMPLATE SOURCES
 # ==========================================
-# Master jadual templates (one .xlsx per jadual, no locations, no data).
-TEMPLATES_DIR = "/Users/akmalhakim/Downloads/_NBDAC/Subnasional/template_generator/1_template_automation/output_v2"
-
+# Move your templates into a 'templates' folder at the root of your repo
+TEMPLATES_DIR = os.path.join(BASE_DIR, 'templates')
 
 # ==========================================
 # STAGE 2 — PIPELINE STAGING
 # ==========================================
-# Stage 1 output: {State}/Jadual N.xlsx  (locations injected, data empty)
-OUTPUT_LOCATIONS_DIR = "/Users/akmalhakim/Downloads/_NBDAC/Subnasional/template_generator/2_location_injector/output_with_locations"
+# Move intermediate outputs into a 'data/output_with_locations' folder
+OUTPUT_LOCATIONS_DIR = os.path.join(BASE_DIR, 'data', 'output_with_locations')
 
 # Stage 2 output: {State}/Jadual N.xlsx  (locations + data filled)
 OUTPUT_FINAL_DIR = os.path.join(BASE_DIR, 'output_final')
